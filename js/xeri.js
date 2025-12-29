@@ -1,4 +1,9 @@
+
+alert('JS φορτώθηκε');
+
 $('#login_btn').click(function () {
+
+
 
     const username = $('#username').val().trim();
 
