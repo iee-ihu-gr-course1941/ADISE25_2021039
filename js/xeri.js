@@ -7,22 +7,28 @@ $('#login_btn').click(function () {
         return;
     }
 
+    // ΠΡΟΣΩΡΙΝΑ: πάντα P1 (μετά το κάνουμε έξυπνο)
+    const player = 'P1';
+
     $.ajax({
-        url: 'api/player.php',
-        method: 'POST',
+        url: 'api/player.php/' + player,
+        method: 'PUT',
         contentType: 'application/json',
+        dataType: 'json',
         data: JSON.stringify({ username: username }),
         success: function (data) {
-            $('#result').text(JSON.stringify(data, null, 2));
+            console.log(data);
 
-            // αποθήκευση token (για επόμενα calls)
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('player', data.player);
+            localStorage.setItem('token', data[0].token);
+            localStorage.setItem('player', data[0].player);
 
-            alert('Συνδέθηκες ως ' + data.player);
+            $('#game_info').html(
+                'Παίκτης: ' + data[0].player +
+                '<br>Όνομα: ' + data[0].username
+            );
         },
         error: function (xhr) {
-            $('#result').text(xhr.responseText);
+            alert(xhr.responseText);
         }
     });
 
