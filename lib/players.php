@@ -1,48 +1,55 @@
 <?php
-require_once "../lib/db2connect.php";
-
 $method = $_SERVER['REQUEST_METHOD'];
+$request = explode('/', trim($_SERVER['PATH_INFO'],'/'));
 
-if ($method === 'POST') {
-    login_player();
+$resource = $request[0] ?? null;
+$param    = $request[1] ?? null;
+
+$input = json_decode(file_get_contents("php://input"), true);
+
+if ($resource === 'player') {
+    handle_user($method, $param, $input);
 }
 
-function login_player() {
-    global $mysqli;
 
-    $input = json_decode(file_get_contents("php://input"), true);
 
-    if (!isset($input['username']) || $input['username'] == '') {
-        http_response_code(400);
-        echo json_encode(['error' => 'No username']);
-        exit;
-    }
-
-    $username = $input['username'];
-
-    // Βρες ελεύθερο player
-    $sql = "SELECT player FROM players WHERE username IS NULL LIMIT 1";
-    $res = $mysqli->query($sql);
-
-    if ($res->num_rows == 0) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Game full']);
-        exit;
-    }
-
-    $row = $res->fetch_assoc();
-    $player = $row['player'];
-    $token = md5($username . time());
-
-    $stmt = $mysqli->prepare(
-        "UPDATE players SET username=?, token=? WHERE player=?"
-    );
-    $stmt->bind_param("sss", $username, $token, $player);
-    $stmt->execute();
-
-    echo json_encode([
-        'player' => $player,
-        'username' => $username,
-        'token' => $token
-    ]);
+function handle_user($method, $b,$input) {
+	if($method=='PUT') { 
+        set_user($b,$input);}}
+function set_user($b,$input) {
+    if(!isset($input['username']) || $input['username']=='') {
+		header("HTTP/1.1 400 Bad Request");
+		print json_encode(['errormesg'=>"No username given."]);
+		exit;}
+	$username=$input['username'];
+	global $mysqli;
+	$sql = 'select count(*) as c 
+	        from players 
+			where player=? 
+			and username is not null
+			and last_action > (NOW() - INTERVAL 5 MINUTE)';
+	$st = $mysqli->prepare($sql);
+	$st->bind_param('s',$b);
+	$st->execute();
+	$res = $st->get_result();
+	$r = $res->fetch_all(MYSQLI_ASSOC);
+	if($r[0]['c']>0) {
+		header("HTTP/1.1 400 Bad Request");
+		print json_encode(['errormesg'=>"Player $b is already set. Please select another color."]);
+		exit;}
+	$sql = 'update players 
+	        set username=?, 
+	        token=md5(CONCAT( ?, NOW()))
+		    where player=?';
+	$st2 = $mysqli->prepare($sql);
+	$st2->bind_param('sss',$username,$username,$b);
+	$st2->execute();
+	$sql = 'select * from players where player=?';
+	$st = $mysqli->prepare($sql);
+	$st->bind_param('s',$b);
+	$st->execute();
+	$res = $st->get_result();
+	header('Content-type: application/json');
+	print json_encode($res->fetch_all(MYSQLI_ASSOC), JSON_PRETTY_PRINT);
 }
+
