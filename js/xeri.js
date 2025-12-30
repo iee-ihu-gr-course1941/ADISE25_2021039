@@ -1,16 +1,8 @@
+$(function() {
+    $("#login_btn").click(login_to_game);
+});
 
-
-$( function() {
-
-	
-
-	
-  	$("#login_btn").click(login_to_game);
-    
-}
-);
-function login_to_game()  {
-
+function login_to_game() {
     var username = $('#username').val().trim();
     var player   = $('#player').val();
 
@@ -20,19 +12,19 @@ function login_to_game()  {
     }
 
     $.ajax({
-    url: '/ADISE25_2021039/players.php/player/' + player,
-    method: 'PUT',
-    contentType: 'application/json',
-    data: JSON.stringify({ username: username }),
-    success: function (data) {
-        console.log(data);
-        localStorage.setItem('token', data[0].token);
-        localStorage.setItem('player', data[0].player);
-        alert('Συνδέθηκες ως ' + data[0].player);
-    },
-    error: function (xhr) {
-        alert(xhr.responseText);
-    }
-});
-
+        url: '/ADISE25_2021039/players.php/player/' + player,
+        method: 'PUT',
+        contentType: 'application/json',
+        dataType: 'json',  // <--- σημαντικό για να γίνει parsed το JSON
+        data: JSON.stringify({ username: username }),
+        success: function(data) {
+            console.log(data);
+            alert('OK, affected rows: ' + data.affected_rows);
+        },
+        error: function(xhr) {
+            console.error('Status:', xhr.status);
+            console.error(xhr.responseText);
+            alert('Error: ' + xhr.responseText);
+        }
+    });
 }

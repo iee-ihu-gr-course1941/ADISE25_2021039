@@ -6,9 +6,15 @@ php_value error_log logs/PHP_errors.log
 
 RewriteEngine On
 
+# Αν υπάρχει πραγματικό αρχείο .php, μην κάνεις rewrite
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+
+# Όλα τα υπόλοιπα στέλνονται στο index.php
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ $1 [QSA,L]
+RewriteRule ^ index.php [QSA,L]
+
 
 <Limit GET HEAD POST PUT DELETE OPTIONS>
 Require all granted
