@@ -1,4 +1,12 @@
 <?php
+file_put_contents(
+  'logs/debug.txt',
+  "URI=".$_SERVER['REQUEST_URI']."\n".
+  "METHOD=".$_SERVER['REQUEST_METHOD']."\n".
+  "BODY=".file_get_contents('php://input')."\n\n",
+  FILE_APPEND
+);
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
