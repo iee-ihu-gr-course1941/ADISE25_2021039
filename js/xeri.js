@@ -20,20 +20,19 @@ function login_to_game()  {
     }
 
     $.ajax({
-        url: '/players.php/player' +player,
-        method: 'PUT',
-        contentType: 'application/json',
-        data: JSON.stringify({ username: username }),
-        success: function (data) {
-            console.log(data);
+    url: '/ADISE25_2021039/players.php/player/' + player,
+    method: 'PUT',
+    contentType: 'application/json',
+    data: JSON.stringify({ username: username }),
+    success: function (data) {
+        console.log(data);
+        localStorage.setItem('token', data[0].token);
+        localStorage.setItem('player', data[0].player);
+        alert('Συνδέθηκες ως ' + data[0].player);
+    },
+    error: function (xhr) {
+        alert(xhr.responseText);
+    }
+});
 
-            localStorage.setItem('token', data[0].token);
-            localStorage.setItem('player', data[0].player);
-
-            alert('Συνδέθηκες ως ' + data[0].player);
-        },
-        error: function (xhr) {
-            alert(xhr.responseText);
-        }
-    });
 }
