@@ -2,32 +2,27 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-require_once 'db2connect.php'; // Σύνδεση με $mysqli
-
+require_once 'db2connect.php';
 header('Content-Type: application/json');
 
-// Έλεγχος HTTP method
-$method = $_SERVER['REQUEST_METHOD'];
-if ($method !== 'PUT') {
+if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
     http_response_code(405);
     echo json_encode(['error' => 'Only PUT allowed']);
     exit;
 }
 
-// Παίρνουμε το player από το URI
-$uri = $_SERVER['REQUEST_URI'];
-$parts = explode('/', trim($uri, '/'));
-$player = end($parts); // π.χ. P1 ή P2
+$path = $_SERVER['PATH_INFO'] ?? '';
+$parts = explode('/', trim($path, '/'));
 
-if (!$player) {
+if (count($parts) < 2) {
     http_response_code(400);
     echo json_encode(['error' => 'No player specified']);
     exit;
 }
 
-// Παίρνουμε το JSON από το request body
-$input = json_decode(file_get_contents('php://input'), true);
+$player = $parts[1]; // P1 ή P2
 
+$input = json_decode(file_get_contents('php://input'), true);
 if (!isset($input['username']) || trim($input['username']) === '') {
     http_response_code(400);
     echo json_encode(['error' => 'No username provided']);
@@ -35,9 +30,6 @@ if (!isset($input['username']) || trim($input['username']) === '') {
 }
 
 $username = trim($input['username']);
-
-// Προετοιμάζουμε το UPDATE
-$mysqli->query("SET SESSION CLIENT_FOUND_ROWS=1"); // Μετρά affected_rows ακόμα κι αν ίδια τιμή
 
 $stmt = $mysqli->prepare("
     UPDATE players 
@@ -49,32 +41,17 @@ $stmt = $mysqli->prepare("
 
 if (!$stmt) {
     http_response_code(500);
-    echo json_encode(['error' => 'Prepare failed', 'details' => $mysqli->error]);
+    echo json_encode(['error' => $mysqli->error]);
     exit;
 }
 
 $stmt->bind_param('sss', $username, $username, $player);
 $stmt->execute();
 
-if ($stmt->errno) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Execute failed', 'details' => $stmt->error]);
-    exit;
-}
-
-$affected = $stmt->affected_rows;
-
-// Παίρνουμε τα ενημερωμένα δεδομένα
 $res = $mysqli->prepare("SELECT * FROM players WHERE player = ?");
 $res->bind_param('s', $player);
 $res->execute();
-$result = $res->get_result();
-$data = $result->fetch_all(MYSQLI_ASSOC);
+$data = $res->get_result()->fetch_all(MYSQLI_ASSOC);
 
-// Επιστρέφουμε JSON
-echo json_encode([
-    'success' => true,
-    'affected_rows' => $affected,
-    'player_data' => $data
-], JSON_PRETTY_PRINT);
+echo json_encode($data, JSON_PRETTY_PRINT);
 

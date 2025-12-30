@@ -19,6 +19,7 @@ function login_to_game() {
         data: JSON.stringify({ username: username }),
         success: function(data) {
             console.log(data);
+            alert('Συνδέθηκες ως ' + data[0].player);
             alert('OK, affected rows: ' + data.affected_rows);
         },
         error: function(xhr) {
