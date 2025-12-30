@@ -1,6 +1,14 @@
 
+$( function() {
 
-$('#login_btn').click(function () {
+	
+
+	
+  	$('#login_btn').click(login_to_game);
+    
+}
+);
+function login_to_game()  {
 
     const username = $('#username').val().trim();
     const player   = $('#player').val();
@@ -27,4 +35,4 @@ $('#login_btn').click(function () {
             alert(xhr.responseText);
         }
     });
-});
+};
