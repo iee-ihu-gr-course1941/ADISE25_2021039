@@ -1,17 +1,18 @@
 
+
 $( function() {
 
 	
 
 	
-  	$('#login_btn').click(login_to_game);
+  	$("#login_btn").click(login_to_game);
     
 }
 );
 function login_to_game()  {
 
-    const username = $('#username').val().trim();
-    const player   = $('#player').val();
+    var username = $('#username').val().trim();
+    var player   = $('#player').val();
 
     if (username === '') {
         alert('Δώσε όνομα χρήστη');
@@ -19,7 +20,7 @@ function login_to_game()  {
     }
 
     $.ajax({
-        url: 'api/players.php/player/' + player,
+        url: '/players.php/player' +player,
         method: 'PUT',
         contentType: 'application/json',
         data: JSON.stringify({ username: username }),
@@ -35,4 +36,4 @@ function login_to_game()  {
             alert(xhr.responseText);
         }
     });
-};
+}

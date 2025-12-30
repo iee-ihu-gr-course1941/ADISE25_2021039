@@ -1,15 +1,36 @@
 <?php
+require_once 'db2connect.php';
 $method = $_SERVER['REQUEST_METHOD'];
 $request = explode('/', trim($_SERVER['PATH_INFO'],'/'));
+// $request = explode('/', trim($_SERVER['SCRIPT_NAME'],'/'));
+// Σε περίπτωση που τρέχουμε php –S 
+$input = json_decode(file_get_contents('php://input'),true);
 
-$resource = $request[0] ?? null;
-$param    = $request[1] ?? null;
-
-$input = json_decode(file_get_contents("php://input"), true);
-
-if ($resource === 'player') {
-    handle_user($method, $param, $input);
+//Lecture 4
+if($input==null) {
+    $input=[];
 }
+if (isset($_SERVER['HTTP_APP_TOKEN'])) {
+    $input['token']=$_SERVER['HTTP_APP_TOKEN'];
+} elseif (!isset($input['token'])) {
+    $input['token']='';
+}
+
+switch ($r=array_shift($request)) {
+	
+	case 'player': 
+		handle_user($method, $request, $input);
+		break;
+  default: 	
+		header("HTTP/1.1 404 Not Found");
+		print "<h1>Page not found (404)</h1>";
+	  exit;
+}
+
+
+
+
+
 
 
 
