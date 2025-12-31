@@ -1,0 +1,84 @@
+URI=/ADISE25_2021039/lib/players.php/player/P1%0A
+METHOD=PUT
+BODY={
+	"username": "mar"
+}
+
+URI=/ADISE25_2021039/lib/players.php/player/P1%0A
+METHOD=PUT
+BODY={
+	"username": "mar"
+}
+
+URI=/ADISE25_2021039/lib/players.php/player/P1%0A
+METHOD=PUT
+BODY={
+	"username": "mar"
+}
+
+URI=/ADISE25_2021039/lib/players.php/player/P1%0A
+METHOD=PUT
+BODY={
+	"username": "mar"
+}
+
+URI=/ADISE25_2021039/lib/players.php/player/P1%0A
+METHOD=PUT
+BODY={
+	"username": "mar"
+}
+
+URI=/ADISE25_2021039/lib/players.php/player/P1%0A
+METHOD=PUT
+BODY={
+	"username": "mar"
+}
+
+URI=/ADISE25_2021039/lib/players.php/player/P1
+METHOD=PUT
+BODY={"username":"μαρια"}
+
+URI=/ADISE25_2021039/lib/players.php/player/P1%0A
+METHOD=PUT
+BODY={
+	"username": "mar"
+}
+
+URI=/ADISE25_2021039/lib/players.php/player/P1%0A
+METHOD=PUT
+BODY={
+	"username": "mar"
+}
+
+URI=/ADISE25_2021039/lib/players.php/player/P1
+METHOD=PUT
+BODY={"username":"μαργβ"}
+
+URI=/ADISE25_2021039/lib/players.php/player/P1%0A
+METHOD=PUT
+BODY={
+	"username": "mar"
+}
+
+URI=/ADISE25_2021039/lib/players.php/player/P2%0A
+METHOD=PUT
+BODY={
+	"username": "mar"
+}
+
+URI=/ADISE25_2021039/lib/players.php/player/P1
+METHOD=PUT
+BODY={"username":"μαργβ"}
+
+URI=/ADISE25_2021039/lib/players.php/player/P2
+METHOD=PUT
+BODY={"username":"μαργβ"}
+
+URI=/ADISE25_2021039/lib/players.php/player/P1
+METHOD=PUT
+BODY={"username":"φφ"}
+
+URI=/ADISE25_2021039/lib/players.php/player/P2
+METHOD=PUT
+BODY={"username":"φφ"}
+

@@ -1,14 +1,16 @@
 <?php
-file_put_contents(
-  'logs/debug.txt',
-  "URI=".$_SERVER['REQUEST_URI']."\n".
-  "METHOD=".$_SERVER['REQUEST_METHOD']."\n".
-  "BODY=".file_get_contents('php://input')."\n\n",
-  FILE_APPEND
-);
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+
+file_put_contents(
+    __DIR__ . '/../logs/debug.txt',
+    "URI=".$_SERVER['REQUEST_URI']."\n".
+    "METHOD=".$_SERVER['REQUEST_METHOD']."\n".
+    "BODY=".file_get_contents('php://input')."\n\n",
+    FILE_APPEND
+);
+
 
 require_once 'db2connect.php';
 header('Content-Type: application/json');
@@ -28,7 +30,8 @@ if (count($parts) < 2) {
     exit;
 }
 
-$player = $parts[1]; // P1 ή P2
+$player = trim(end($parts));
+ // P1 ή P2
 
 $input = json_decode(file_get_contents('php://input'), true);
 if (!isset($input['username']) || trim($input['username']) === '') {
@@ -38,6 +41,25 @@ if (!isset($input['username']) || trim($input['username']) === '') {
 }
 
 $username = trim($input['username']);
+$check = $mysqli->prepare("
+    SELECT username, last_action 
+    FROM players 
+    WHERE player = ?
+");
+$check->bind_param('s', $player);
+$check->execute();
+$res = $check->get_result();
+$row = $res->fetch_assoc();
+
+if ($row && $row['username'] !== null &&
+    strtotime($row['last_action']) > time() - 300) {
+
+    http_response_code(400);
+    echo json_encode([
+        'error' => "Player $player is already active"
+    ]);
+    exit;
+}
 
 $stmt = $mysqli->prepare("
     UPDATE players 
