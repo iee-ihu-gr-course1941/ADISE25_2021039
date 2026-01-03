@@ -31,7 +31,7 @@ function login_to_game() {
 }
 function load_status() {
     $.ajax({
-        url: '/ADISE25_2021039/lib/game_status.php',
+        url: "/ADISE25_2021039/lib/game_status.php",
         method: 'GET',
         dataType: 'json',
         success: function(data) {
