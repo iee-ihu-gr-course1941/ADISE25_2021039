@@ -14,6 +14,11 @@ if ($method === 'GET') {
 }
 
 /* ================= FUNCTIONS ================= */
+function read_status() {
+    global $mysqli;
+    $res = $mysqli->query("SELECT * FROM game_status");
+    return $res->fetch_assoc();
+}
 
 function show_status() {
     global $mysqli;
