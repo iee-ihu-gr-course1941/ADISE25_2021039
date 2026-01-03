@@ -184,3 +184,7 @@ URI=/ADISE25_2021039/lib/players.php/player/P1
 METHOD=PUT
 BODY={"username":"tryt"}
 
+URI=/ADISE25_2021039/lib/players.php/player/P1
+METHOD=PUT
+BODY={"username":"ry"}
+
