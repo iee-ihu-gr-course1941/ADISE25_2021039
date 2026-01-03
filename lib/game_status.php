@@ -14,6 +14,7 @@ if ($method === 'GET') {
 }
 
 /* ================= FUNCTIONS ================= */
+
 function read_status() {
     global $mysqli;
     $res = $mysqli->query("SELECT * FROM game_status");
@@ -30,12 +31,14 @@ function show_status() {
     );
 }
 
+/*
+ * ΚΕΝΤΡΙΚΗ ΛΟΓΙΚΗ ΚΑΤΑΣΤΑΣΗΣ ΠΑΙΧΝΙΔΙΟΥ
+ */
 function update_game_status() {
     global $mysqli;
 
-    $res = $mysqli->query("SELECT * FROM game_status");
-    $status = $res->fetch_assoc();
-
+    /* -------- ΤΡΕΧΟΥΣΑ ΚΑΤΑΣΤΑΣΗ -------- */
+    $status = read_status();
     if (!$status) {
         return;
     }
@@ -43,26 +46,53 @@ function update_game_status() {
     $new_status = null;
     $new_turn   = $status['turn'];
 
-    /* Αδρανείς παίκτες */
-    $res = $mysqli->query("
-        SELECT COUNT(*) AS aborted
-        FROM players
-        WHERE username IS NOT NULL
-        AND last_action < (NOW() - INTERVAL 20 MINUTE)
-    ");
-    $aborted = $res->fetch_assoc()['aborted'];
+    /* =====================================================
+       ABORT ΜΟΝΟ Ο ΠΑΙΚΤΗΣ ΠΟΥ ΕΧΕΙ ΣΕΙΡΑ
+       ===================================================== */
+    if ($status['turn'] !== null && $status['status'] === 'playing') {
 
-    if ($aborted > 0) {
-        $mysqli->query("
-            UPDATE players
-            SET username = NULL,
-                token = NULL,
-                score = 0
+        $st = $mysqli->prepare("
+            SELECT last_action
+            FROM players
+            WHERE player = ? AND username IS NOT NULL
         ");
-        $new_status = 'aborted';
+        $st->bind_param('s', $status['turn']);
+        $st->execute();
+        $res = $st->get_result();
+        $player = $res->fetch_assoc();
+
+        if ($player && strtotime($player['last_action']) < time() - 60) {
+
+            $loser  = $status['turn'];
+            $winner = ($loser === 'P1') ? 'P2' : 'P1';
+
+            // καθαρίζουμε ΜΟΝΟ τον παίκτη που άργησε
+            $st = $mysqli->prepare("
+                UPDATE players
+                SET username=NULL, token=NULL
+                WHERE player=?
+            ");
+            $st->bind_param('s', $loser);
+            $st->execute();
+
+            // τελείωσε το παιχνίδι
+            $st = $mysqli->prepare("
+                UPDATE game_status
+                SET status='game_end',
+                    result=?,
+                    turn=NULL,
+                    last_change=NOW()
+            ");
+            $st->bind_param('s', $winner);
+            $st->execute();
+
+            return;
+        }
     }
 
-    /* Ενεργοί παίκτες */
+    /* =====================================================
+       ΠΛΗΘΟΣ ΕΝΕΡΓΩΝ ΠΑΙΚΤΩΝ
+       ===================================================== */
     $res = $mysqli->query("
         SELECT COUNT(*) AS c
         FROM players
@@ -72,17 +102,19 @@ function update_game_status() {
 
     if ($active == 0) {
         $new_status = 'not_active';
-        $new_turn = NULL;
+        $new_turn   = NULL;
     }
     elseif ($active == 1) {
         $new_status = 'waiting_player';
-        $new_turn = NULL;
+        $new_turn   = NULL;
     }
-    elseif ($active == 2 && $status['status'] !== 'playing') {
+    elseif ($active == 2 && $status['status'] === 'waiting_player') {
+        // μόλις μπουν και οι 2
         $new_status = 'dealing';
-        $new_turn = 'P1';
+        $new_turn   = 'P1';
     }
 
+    /* -------- ΕΝΗΜΕΡΩΣΗ -------- */
     if ($new_status !== null) {
         $st = $mysqli->prepare("
             UPDATE game_status
@@ -92,4 +124,5 @@ function update_game_status() {
         $st->execute();
     }
 }
+
 
