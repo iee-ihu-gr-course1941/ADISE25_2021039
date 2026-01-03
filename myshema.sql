@@ -56,5 +56,6 @@ CREATE TABLE players (
   player ENUM('P1','P2') PRIMARY KEY,
   username VARCHAR(30),
   token VARCHAR(100),
-  last_action TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  last_action TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  score INT DEFAULT 0
 );

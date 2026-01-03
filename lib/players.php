@@ -77,6 +77,8 @@ if (!$stmt) {
 
 $stmt->bind_param('sss', $username, $username, $player);
 $stmt->execute();
+require_once 'game_status.php';
+update_game_status();
 
 $res = $mysqli->prepare("SELECT * FROM players WHERE player = ?");
 $res->bind_param('s', $player);

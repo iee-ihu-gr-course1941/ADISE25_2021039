@@ -20,7 +20,7 @@ function login_to_game() {
         success: function(data) {
             console.log(data);
             alert('Συνδέθηκες ως ' + data[0].player);
-            alert('OK, affected rows: ' + data.affected_rows);
+            load_status();
         },
         error: function(xhr) {
             console.error('Status:', xhr.status);
@@ -29,3 +29,24 @@ function login_to_game() {
         }
     });
 }
+function load_status() {
+    $.ajax({
+        url: '/ADISE25_2021039/lib/game_status.php',
+        method: 'GET',
+        dataType: 'json',
+        success: function(data) {
+            console.log('STATUS:', data);
+
+            if (data.length > 0) {
+                $('#game_info').html(
+                    'Κατάσταση παιχνιδιού: <b>' + data[0].status + '</b><br>' +
+                    'Σειρά: ' + (data[0].turn ?? '-')
+                );
+            }
+        },
+        error: function(xhr) {
+            console.error(xhr.responseText);
+        }
+    });
+}
+
