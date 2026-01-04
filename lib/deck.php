@@ -8,10 +8,10 @@ require_once 'game_status.php';
 header('Content-Type: application/json');
 
 $method = $_SERVER['REQUEST_METHOD'];
-$path   = $_SERVER['PATH_INFO'] ?? '';
-$parts  = explode('/', trim($path, '/'));
 
-$action = $parts[0] ?? '';
+$uri = strtok($_SERVER['REQUEST_URI'], '?');
+$parts = explode('/', trim($uri, '/'));
+$action = end($parts);
 
 if ($method !== 'POST') {
     http_response_code(405);

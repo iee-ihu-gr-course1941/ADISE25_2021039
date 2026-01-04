@@ -356,3 +356,15 @@ URI=/ADISE25_2021039/lib/players.php/player/P2
 METHOD=PUT
 BODY={"username":"η5"}
 
+URI=/ADISE25_2021039/lib/players.php/player/P1
+METHOD=PUT
+BODY={"username":"ξ"}
+
+URI=/ADISE25_2021039/lib/players.php/player/P2
+METHOD=PUT
+BODY={"username":"ξθθ"}
+
+URI=/ADISE25_2021039/lib/players.php/player/P1
+METHOD=PUT
+BODY={"username":"μσ"}
+
