@@ -1,6 +1,5 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+
 
 require_once 'db2connect.php';
 require_once 'game_status.php';
@@ -8,10 +7,7 @@ require_once 'game_status.php';
 header('Content-Type: application/json');
 
 $method = $_SERVER['REQUEST_METHOD'];
-
-$uri = strtok($_SERVER['REQUEST_URI'], '?');
-$parts = explode('/', trim($uri, '/'));
-$action = end($parts);
+$action = $_GET['action'] ?? '';
 
 if ($method !== 'POST') {
     http_response_code(405);
@@ -32,6 +28,7 @@ switch ($action) {
         http_response_code(404);
         echo json_encode(['error' => 'Unknown action']);
 }
+
 function reset_deck() {
     global $mysqli;
 
