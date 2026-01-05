@@ -1,8 +1,7 @@
 <?php
 require_once 'db2connect.php';
 require_once 'game_status.php';
-require_once 'deck.php';
-require_once 'players.php';
+
 header('Content-Type: application/json');
 
 /* -------- AUTH -------- */
@@ -53,6 +52,8 @@ $res = $mysqli->query("
     SELECT d.card_id, d.suit, d.value
     FROM table_cards t
     JOIN deck d ON t.card_id = d.card_id
+    ORDER BY t.placed_at DESC
+LIMIT 1
 ");
 $table = $res->fetch_all(MYSQLI_ASSOC);
 

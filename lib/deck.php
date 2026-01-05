@@ -105,8 +105,17 @@ $cards = $mysqli->query("
 
 while ($c = $cards->fetch_assoc()) {
     $cid = $c['card_id'];
-    $mysqli->query("UPDATE deck SET is_drawn=1 WHERE card_id=$cid");
-    $mysqli->query("INSERT INTO table_cards(card_id) VALUES ($cid)");
+   $mysqli->query("
+    UPDATE deck 
+    SET is_drawn=1, drawn_by=NULL, drawn_at=NOW()
+    WHERE card_id=$cid
+");
+
+$mysqli->query("
+    INSERT INTO table_cards(card_id, played_by, placed_at)
+    VALUES ($cid, NULL, NOW())
+");
+
 }
 
 

@@ -40,7 +40,7 @@ function login_to_game() {
 /* ================= STATUS ================= */
 function load_status() {
     $.ajax({
-        url: "/ADISE25_2021039/lib/game_status.php",
+       url: "/ADISE25_2021039/lib/game_status_api.php",
         method: 'GET',
         dataType: 'json',
         success: function (data) {
@@ -94,17 +94,64 @@ function load_game_state() {
 /* ================= RENDER ================= */
 function render_my_hand(cards) {
     let html = '<h3>Τα φύλλα μου</h3>';
+
     cards.forEach(c => {
-        html += `<span class="card">${c.value} ${c.suit}</span> `;
+        let code = c.value + c.suit; // πχ AH
+        html += `
+          <span class="card my-card"
+                data-card-id="${c.card_id}"
+                data-card-code="${code}">
+            ${code}
+          </span>
+        `;
     });
+
     $('#my_hand').html(html);
+
+    // click handler
+    $('.my-card').click(on_card_click);
+}
+function on_card_click() {
+    let cardId   = $(this).data('card-id');
+    let cardCode = $(this).data('card-code');
+
+    if (!confirm(`Θες σίγουρα να παίξεις το ${cardCode};`)) {
+        return;
+    }
+
+    play_card(cardId);
 }
 
+
 function render_table(cards) {
-    let html = '<h3>Φύλλα κάτω</h3>';
-    cards.forEach(c => {
-        html += `<span class="card">${c.value} ${c.suit}</span> `;
-    });
+    let html = '<h3>Τραπέζι</h3>';
+
+    if (cards.length === 0) {
+        html += '<div>(Άδειο)</div>';
+    } else {
+        let c = cards[0];
+        html += `<span class="card table-card">${c.value}${c.suit}</span>`;
+    }
+
     $('#table_cards').html(html);
 }
+
+function play_card(cardId) {
+    $.ajax({
+        url: "/ADISE25_2021039/lib/play_card.php",
+        method: 'POST',
+        headers: {
+            'X-TOKEN': localStorage.getItem('token')
+        },
+        contentType: 'application/json',
+        data: JSON.stringify({ card_id: cardId }),
+        success: function () {
+            load_game_state(); // refresh
+        },
+        error: function (xhr) {
+            alert(xhr.responseText);
+        }
+    });
+}
+
 

@@ -8,6 +8,30 @@
   <!-- ΔΙΚΟ ΜΑΣ JS -->
    <script SRC="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <script src="js/xeri.js"></script>
+   <style>
+    .table-card {
+    font-size: 24px;
+    background: #f4f4f4;
+    border: 2px solid #000;
+}
+.my-card {
+    cursor: pointer;
+}
+.my-card:hover {
+    background: #dff0ff;
+}
+
+    .card {
+        display: inline-block;
+        padding: 6px 10px;
+        margin: 4px;
+        border: 1px solid #333;
+        border-radius: 4px;
+        font-weight: bold;
+        background: #fff;
+        font-family: monospace;
+    }
+  </style>
 </head>
 
 <body>
@@ -27,6 +51,7 @@
   <div id="game_info"></div>
 <div id="my_hand"></div>
 <div id="table_cards"></div>
+<br>
 <div>
   Ο αντίπαλος έχει <span id="opponent_cards"></span> φύλλα
 </div>

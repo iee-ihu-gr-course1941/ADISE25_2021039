@@ -5,13 +5,7 @@ ini_set('display_errors', 1);
 require_once "db2connect.php";
 header('Content-Type: application/json');
 
-$method = $_SERVER['REQUEST_METHOD'];
 
-if ($method === 'GET') {
-    update_game_status();
-    show_status();
-    exit;
-}
 
 /* ================= FUNCTIONS ================= */
 
@@ -48,37 +42,30 @@ function update_game_status() {
 
     /* =====================================================
        ABORT ΜΟΝΟ Ο ΠΑΙΚΤΗΣ ΠΟΥ ΕΧΕΙ ΣΕΙΡΑ
+       (με βάση placed_at)
        ===================================================== */
-    if ($status['turn'] !== null && $status['status'] === 'playing') {
+    if ($status['status'] === 'playing' && $status['turn'] !== null) {
 
-        $st = $mysqli->prepare("
-            SELECT last_action
-            FROM players
-            WHERE player = ? AND username IS NOT NULL
+        // τελευταία κάρτα που παίχτηκε
+        $res = $mysqli->query("
+            SELECT MAX(placed_at) AS last_play
+            FROM table_cards
         ");
-        $st->bind_param('s', $status['turn']);
-        $st->execute();
-        $res = $st->get_result();
-        $player = $res->fetch_assoc();
+        $last_play = $res->fetch_assoc()['last_play'];
 
-        if ($player && strtotime($player['last_action']) < time() - 60) {
+        // αν δεν έχει παιχτεί φύλλο ακόμα
+        $last_action = $last_play ?? $status['last_change'];
+
+        // timeout 10 λεπτά
+        if (strtotime($last_action) < time() - 600) {
 
             $loser  = $status['turn'];
             $winner = ($loser === 'P1') ? 'P2' : 'P1';
 
-            // καθαρίζουμε ΜΟΝΟ τον παίκτη που άργησε
-            $st = $mysqli->prepare("
-                UPDATE players
-                SET username=NULL, token=NULL
-                WHERE player=?
-            ");
-            $st->bind_param('s', $loser);
-            $st->execute();
-
-            // τελείωσε το παιχνίδι
+            // παιχνίδι aborted
             $st = $mysqli->prepare("
                 UPDATE game_status
-                SET status='game_end',
+                SET status='aborted',
                     result=?,
                     turn=NULL,
                     last_change=NOW()
@@ -109,7 +96,6 @@ function update_game_status() {
         $new_turn   = NULL;
     }
     elseif ($active == 2 && $status['status'] === 'waiting_player') {
-        // μόλις μπουν και οι 2
         $new_status = 'dealing';
         $new_turn   = 'P1';
     }
@@ -124,5 +110,6 @@ function update_game_status() {
         $st->execute();
     }
 }
+
 
 
