@@ -488,3 +488,23 @@ URI=/ADISE25_2021039/lib/players.php/player/P1
 METHOD=PUT
 BODY={"username":"ξξ"}
 
+URI=/ADISE25_2021039/lib/players.php/player/P1
+METHOD=PUT
+BODY={"username":"ν"}
+
+URI=/ADISE25_2021039/lib/players.php/player/P1
+METHOD=PUT
+BODY={"username":"ηξ"}
+
+URI=/ADISE25_2021039/lib/players.php/player/P1
+METHOD=PUT
+BODY={"username":"γη"}
+
+URI=/ADISE25_2021039/lib/players.php/player/P1
+METHOD=PUT
+BODY={"username":"ν"}
+
+URI=/ADISE25_2021039/lib/players.php/player/P1
+METHOD=PUT
+BODY={"username":"ιυ"}
+
