@@ -1,6 +1,4 @@
 <?php
-
-
 require_once 'db2connect.php';
 require_once 'game_status.php';
 
@@ -16,12 +14,14 @@ if ($method !== 'POST') {
 }
 
 switch ($action) {
+
     case 'reset':
-        reset_deck();
+        reset_game();
         break;
 
     case 'deal':
-        deal_cards();
+        $with_table = ($_GET['first'] ?? '0') === '1';
+        deal_cards($with_table);
         break;
 
     default:
@@ -29,101 +29,130 @@ switch ($action) {
         echo json_encode(['error' => 'Unknown action']);
 }
 
-function reset_deck() {
+/* ================= RESET ================= */
+function reset_game() {
     global $mysqli;
 
-    // καθαρισμός φύλλων
     $mysqli->query("UPDATE deck SET is_drawn=0, drawn_by=NULL, drawn_at=NULL");
     $mysqli->query("DELETE FROM hands");
     $mysqli->query("DELETE FROM table_cards");
 
-    // reset status
     $mysqli->query("
-        UPDATE game_status 
-        SET status='dealing', turn='P1', last_change=NOW()
+        UPDATE game_status
+        SET status='dealing',
+            turn='P1',
+            last_change=NOW()
     ");
 
-    echo json_encode(['success' => true, 'message' => 'Deck reset']);
+    echo json_encode(['success'=>true, 'message'=>'Game reset']);
 }
-function deal_cards() {
+
+/* ================= DEAL ================= */
+function deal_cards(bool $with_table=false) {
     global $mysqli;
 
-    // έλεγχος status
     $status = read_status();
     if ($status['status'] !== 'dealing') {
         http_response_code(400);
-        echo json_encode(['error' => 'Game not in dealing state']);
+        echo json_encode(['error'=>'Game not in dealing state']);
         exit;
     }
 
     // έλεγχος παικτών
     $res = $mysqli->query("
-        SELECT COUNT(*) AS c 
-        FROM players 
+        SELECT COUNT(*) AS c
+        FROM players
         WHERE username IS NOT NULL
     ");
-    if ($res->fetch_assoc()['c'] != 2) {
+    if ((int)$res->fetch_assoc()['c'] !== 2) {
         http_response_code(400);
-        echo json_encode(['error' => 'Need 2 players']);
+        echo json_encode(['error'=>'Need 2 players']);
         exit;
     }
 
-   // 6 φύλλα σε κάθε παίκτη
-foreach (['P1','P2'] as $player) {
-    $cards = $mysqli->query("
-        SELECT card_id 
-        FROM deck 
-        WHERE is_drawn=0 
-        ORDER BY RAND() 
-        LIMIT 6
+    // διαθέσιμα φύλλα
+    $res = $mysqli->query("
+        SELECT COUNT(*) AS c
+        FROM deck
+        WHERE is_drawn=0
     ");
-
-    while ($c = $cards->fetch_assoc()) {
-        $cid = $c['card_id'];
-
-        $mysqli->query("
-            UPDATE deck 
-            SET is_drawn=1, drawn_by='$player', drawn_at=NOW() 
-            WHERE card_id=$cid
-        ");
-
-        $mysqli->query("
-            INSERT INTO hands(card_id, player) 
-            VALUES ($cid, '$player')
-        ");
+    if ((int)$res->fetch_assoc()['c'] < 12) {
+        http_response_code(400);
+        echo json_encode(['error'=>'Not enough cards']);
+        exit;
     }
+
+    /* === 6 φύλλα σε κάθε παίκτη === */
+    foreach (['P1','P2'] as $player) {
+
+        $cards = $mysqli->query("
+            SELECT card_id
+            FROM deck
+            WHERE is_drawn=0
+            ORDER BY RAND()
+            LIMIT 6
+        ");
+
+        while ($c = $cards->fetch_assoc()) {
+            $cid = (int)$c['card_id'];
+
+            $mysqli->query("
+                UPDATE deck
+                SET is_drawn=1,
+                    drawn_by='$player',
+                    drawn_at=NOW()
+                WHERE card_id=$cid
+            ");
+
+            $mysqli->query("
+                INSERT INTO hands(card_id, player)
+                VALUES ($cid, '$player')
+            ");
+        }
+    }
+
+    /* === 4 στο τραπέζι ΜΟΝΟ στον 1ο γύρο === */
+    if ($with_table) {
+
+        $cards = $mysqli->query("
+            SELECT card_id
+            FROM deck
+            WHERE is_drawn=0
+            ORDER BY RAND()
+            LIMIT 4
+        ");
+
+        while ($c = $cards->fetch_assoc()) {
+            $cid = (int)$c['card_id'];
+
+            $mysqli->query("
+                UPDATE deck
+                SET is_drawn=1, drawn_at=NOW()
+                WHERE card_id=$cid
+            ");
+
+            $mysqli->query("
+                INSERT INTO table_cards(card_id, placed_at)
+                VALUES ($cid, NOW())
+            ");
+        }
+    }
+
+    // παιχνίδι ξεκινά
+    //ΜΗΝ πειράζεις table_cards αν ΔΕΝ είναι 1ος γύρος
+
+$st = $mysqli->prepare("
+    UPDATE game_status
+    SET status='playing',
+        turn='P1',
+        last_change=NOW()
+");
+$st->execute();
+
+echo json_encode([
+    'success'      => true,
+    'first_round'  => $with_table,
+   
+]);
+
 }
-
-// 4 φύλλα στο τραπέζι
-$cards = $mysqli->query("
-    SELECT card_id 
-    FROM deck 
-    WHERE is_drawn=0 
-    ORDER BY RAND() 
-    LIMIT 4
-");
-
-while ($c = $cards->fetch_assoc()) {
-    $cid = $c['card_id'];
-   $mysqli->query("
-    UPDATE deck 
-    SET is_drawn=1, drawn_by=NULL, drawn_at=NOW()
-    WHERE card_id=$cid
-");
-
-$mysqli->query("
-    INSERT INTO table_cards(card_id, played_by, placed_at)
-    VALUES ($cid, NULL, NOW())
-");
-
-}
-
-
-    // μετάβαση σε playing
-    $mysqli->query("
-        UPDATE game_status 
-        SET status='playing', last_change=NOW()
-    ");
-
-    echo json_encode(['success' => true, 'message' => 'Cards dealt']);
-}?>

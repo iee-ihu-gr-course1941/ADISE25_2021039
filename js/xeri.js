@@ -57,6 +57,13 @@ function load_status() {
             if (st.status === 'playing') {
                 load_game_state();
             }
+if (st.status === 'game_end') {
+   alert(st.result === localStorage.getItem('player')
+     ? 'Νίκησες 🎉'
+     : 'Έχασες 😞'
+   );
+}
+
         }
     });
 }

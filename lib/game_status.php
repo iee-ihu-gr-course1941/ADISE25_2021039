@@ -95,10 +95,20 @@ function update_game_status() {
         $new_status = 'waiting_player';
         $new_turn   = NULL;
     }
-    elseif ($active == 2 && $status['status'] === 'waiting_player') {
-        $new_status = 'dealing';
-        $new_turn   = 'P1';
-    }
+ elseif ($active == 2 && $status['status'] === 'waiting_player') {
+
+    $mysqli->query("
+        UPDATE game_status
+        SET status='dealing',
+            turn='P1',
+            last_change=NOW()
+    ");
+
+    return;
+}
+
+
+
 
     /* -------- ΕΝΗΜΕΡΩΣΗ -------- */
     if ($new_status !== null) {
