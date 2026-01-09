@@ -27,15 +27,28 @@ function login_to_game() {
 
             $('#game_initializer').hide();
             alert('Συνδέθηκες ως ' + data[0].player);
+load_status();
+window.statusInterval = setInterval(load_status, 2000);
 
-            load_status();
-            setInterval(load_status, 2000);
         },
         error: function (xhr) {
             alert(xhr.responseText);
         }
     });
 }
+function load_xeria() {
+    $.ajax({
+        url: "/ADISE25_2021039/lib/xeri_status.php",
+        method: "GET",
+        dataType: "json",
+        success: function(data) {
+            let me = localStorage.getItem('player');
+            $('#xeri_normal').text(data[me].normal);
+            $('#xeri_jack').text(data[me].jack);
+        }
+    });
+}
+let gameEnded = false;
 
 /* ================= STATUS ================= */
 function load_status() {
@@ -57,16 +70,65 @@ function load_status() {
             if (st.status === 'playing') {
                 load_game_state();
             }
-if (st.status === 'game_end') {
-   alert(st.result === localStorage.getItem('player')
-     ? 'Νίκησες 🎉'
-     : 'Έχασες 😞'
-   );
+       if (st.status === 'aborted') {
+
+    clearInterval(window.statusInterval);
+
+    let me = localStorage.getItem('player');
+
+    // αν εγώ είμαι ο νικητής
+    if (st.result === me) {
+
+        if (confirm('🏆 Νίκησες! Ο αντίπαλος άργησε να παίξει.\n\nΠάτα ΟΚ για επιστροφή στην αρχή')) {
+            end_game();
+        }
+
+    } else {
+        // εγώ άργησα → απλό refresh
+        end_game();
+    }
 }
+
+
+if (st.status === 'game_end') {
+
+    clearInterval(window.statusInterval);
+    load_game_state(); // τελευταία ενημέρωση
+
+    let me = localStorage.getItem('player');
+    let msg = (st.result === me)
+        ? '🎉 Νίκησες!'
+        : (st.result === 'draw')
+            ? '🤝 Ισοπαλία'
+            : '❌ Έχασες';
+
+    $('#game_end_msg').text(msg);
+    $('#game_end_box').show();
+
+    $('#game_end_ok').off().on('click', function () {
+        end_game();
+    });
+}
+
+
+
+
+
 
         }
     });
 }
+function end_game() {
+    $.ajax({
+        url: "/ADISE25_2021039/lib/end_game.php",
+        method: "POST",
+        complete: function () {
+            localStorage.clear();
+            location.reload(true); // 🔥 πλήρες refresh
+        }
+    });
+}
+
 
 /* ================= GAME STATE ================= */
 function load_game_state() {
@@ -89,13 +151,21 @@ function load_game_state() {
 
     render_my_hand(data.my_hand);
     render_table(data.table_cards);
+    update_table_count(data.table_count);
+
     $('#opponent_cards').text(data.opponent_cards);
+    load_xeria();
 },
 
         error: function (xhr) {
             console.error(xhr.responseText);
         }
     });
+}
+function update_table_count(count) {
+    $('#table_count').html(
+        `<b>Φύλλα στο τραπέζι:</b> ${count}`
+    );
 }
 
 /* ================= RENDER ================= */
@@ -152,9 +222,18 @@ function play_card(cardId) {
         },
         contentType: 'application/json',
         data: JSON.stringify({ card_id: cardId }),
-        success: function () {
-            load_game_state(); // refresh
-        },
+        success: function (data) {
+
+    // 🔥 αν τελείωσε ο γύρος
+    if (data.round_end) {
+        load_status();   // θα δει dealing
+        return;
+    }
+
+    // κανονικό refresh
+    load_game_state();
+}
+,
         error: function (xhr) {
             alert(xhr.responseText);
         }

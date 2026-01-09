@@ -1,24 +1,19 @@
 <?php
 require_once 'db2connect.php';
 require_once 'game_status.php';
-
+update_game_status();
 header('Content-Type: application/json');
 
-/* -------- AUTH -------- */
+/* ================= AUTH ================= */
 $token = $_SERVER['HTTP_X_TOKEN'] ?? '';
 
 $st = $mysqli->prepare("
-   SELECT player 
-FROM players 
-WHERE token = ?
-AND username IS NOT NULL
-
+    SELECT player FROM players
+    WHERE token=? AND username IS NOT NULL
 ");
-
 $st->bind_param('s', $token);
 $st->execute();
-$res = $st->get_result();
-$me = $res->fetch_assoc();
+$me = $st->get_result()->fetch_assoc();
 
 if (!$me) {
     http_response_code(401);
@@ -26,52 +21,50 @@ if (!$me) {
     exit;
 }
 
-$my_player = $me['player'];
-$opponent  = ($my_player === 'P1') ? 'P2' : 'P1';
+$player   = $me['player'];
+$opponent = ($player === 'P1') ? 'P2' : 'P1';
 
-/* -------- STATUS -------- */
+/* ================= STATUS ================= */
 $status = read_status();
-if ($status['status'] !== 'playing') {
-    echo json_encode(['status'=>$status['status']]);
-    exit;
+
+/* ================= MY HAND ================= */
+$res = $mysqli->query("
+    SELECT h.card_id, d.value, d.suit
+    FROM hands h
+    JOIN deck d ON d.card_id = h.card_id
+    WHERE h.player='$player'
+");
+$my_hand = $res->fetch_all(MYSQLI_ASSOC);
+
+/* ================= TABLE CARDS (SAFE) ================= */
+$table_cards = []; // 🔥 ΠΑΝΤΑ αρχικοποίηση
+
+$res = $mysqli->query("
+    SELECT t.card_id, d.value, d.suit
+    FROM table_cards t
+    JOIN deck d ON d.card_id = t.card_id
+    ORDER BY t.placed_at DESC
+    
+");
+
+if ($res) {
+    $table_cards = $res->fetch_all(MYSQLI_ASSOC);
 }
 
-/* -------- MY HAND -------- */
-$st = $mysqli->prepare("
-    SELECT d.card_id, d.suit, d.value
-    FROM hands h
-    JOIN deck d ON h.card_id = d.card_id
-    WHERE h.player = ?
-");
-$st->bind_param('s', $my_player);
-$st->execute();
-$my_hand = $st->get_result()->fetch_all(MYSQLI_ASSOC);
-
-/* -------- TABLE -------- */
+/* ================= OPPONENT CARDS ================= */
 $res = $mysqli->query("
-    SELECT d.card_id, d.suit, d.value
-    FROM table_cards t
-    JOIN deck d ON t.card_id = d.card_id
-    ORDER BY t.placed_at DESC
-LIMIT 1
-");
-$table = $res->fetch_all(MYSQLI_ASSOC);
-
-/* -------- OPPONENT COUNT -------- */
-$st = $mysqli->prepare("
-    SELECT COUNT(*) AS c
+    SELECT COUNT(*) c
     FROM hands
-    WHERE player = ?
+    WHERE player='$opponent'
 ");
-$st->bind_param('s', $opponent);
-$st->execute();
-$opp_cards = $st->get_result()->fetch_assoc()['c'];
+$opponent_cards = (int)$res->fetch_assoc()['c'];
 
-/* -------- RESPONSE -------- */
+/* ================= RESPONSE ================= */
 echo json_encode([
-    'status' => 'playing',
-    'me' => $my_player,
-    'my_hand' => $my_hand,
-    'table_cards' => $table,
-    'opponent_cards' => $opp_cards
+    'status'           => $status['status'],
+    'turn'             => $status['turn'],
+    'my_hand'          => $my_hand,
+    'table_cards'      => $table_cards,
+    'table_count'      => count($table_cards), // ✅ ΤΩΡΑ ΑΣΦΑΛΕΣ
+    'opponent_cards'   => $opponent_cards
 ], JSON_PRETTY_PRINT);

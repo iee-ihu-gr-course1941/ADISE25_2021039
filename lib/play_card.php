@@ -21,7 +21,7 @@ if (!$me) {
     exit;
 }
 
-$player = $me['player'];
+$player   = $me['player'];
 $opponent = ($player === 'P1') ? 'P2' : 'P1';
 
 /* ================= INPUT ================= */
@@ -43,9 +43,7 @@ if ($status['turn'] !== $player) {
 }
 
 /* ================= CARD INFO ================= */
-$st = $mysqli->prepare("
-    SELECT value, suit FROM deck WHERE card_id=?
-");
+$st = $mysqli->prepare("SELECT value, suit FROM deck WHERE card_id=?");
 $st->bind_param('i', $card_id);
 $st->execute();
 $played = $st->get_result()->fetch_assoc();
@@ -56,9 +54,7 @@ if (!$played) {
 }
 
 /* ================= REMOVE FROM HAND ================= */
-$st = $mysqli->prepare("
-    DELETE FROM hands WHERE card_id=? AND player=?
-");
+$st = $mysqli->prepare("DELETE FROM hands WHERE card_id=? AND player=?");
 $st->bind_param('is', $card_id, $player);
 $st->execute();
 
@@ -71,7 +67,7 @@ if ($st->affected_rows === 0) {
 $res = $mysqli->query("
     SELECT t.card_id, d.value
     FROM table_cards t
-    JOIN deck d ON d.card_id = t.card_id
+    JOIN deck d ON d.card_id=t.card_id
     ORDER BY t.placed_at DESC
     LIMIT 1
 ");
@@ -83,12 +79,9 @@ $is_jack   = ($played['value'] === 'J');
 $is_xeri   = false;
 $xeri_type = null;
 
-// Βαλές μαζεύει ΜΟΝΟ αν υπάρχει φύλλο
 if ($is_jack && $top) {
     $collect = true;
 }
-
-// ίδιο value ΜΟΝΟ με το ΠΑΝΩ φύλλο
 if (!$is_jack && $top && $played['value'] === $top['value']) {
     $collect = true;
 }
@@ -96,153 +89,100 @@ if (!$is_jack && $top && $played['value'] === $top['value']) {
 /* ================= ACTION ================= */
 if ($collect) {
 
-    // πόσα φύλλα υπήρχαν
-    $res = $mysqli->query("SELECT COUNT(*) AS c FROM table_cards");
+    $res = $mysqli->query("SELECT COUNT(*) c FROM table_cards");
     $table_count = (int)$res->fetch_assoc()['c'];
 
-    // Ξερή ΜΟΝΟ αν 1 φύλλο
     if ($table_count === 1) {
-
-        if ($played['value'] === 'J' && $top['value'] === 'J') {
-            $is_xeri = true;
-            $xeri_type = 'jack'; // 20
+        if ($played['value']==='J' && $top['value']==='J') {
+            $is_xeri=true; $xeri_type='jack';
+        } elseif ($played['value']===$top['value']) {
+            $is_xeri=true; $xeri_type='normal';
         }
-        elseif ($played['value'] === $top['value'] && $played['value'] !== 'J') {
-            $is_xeri = true;
-            $xeri_type = 'normal'; // 10
-        }
-
     }
-if ($is_xeri) {
-    $st = $mysqli->prepare("
-        INSERT INTO xeri_stats (player, type)
-        VALUES (?, ?)
-    ");
-    $st->bind_param('ss', $player, $xeri_type);
-    $st->execute();
-}
 
-    // μαζεύουμε τραπέζι
+    if ($is_xeri) {
+        $st = $mysqli->prepare("
+            INSERT INTO xeri_stats(player,type)
+            VALUES(?,?)
+        ");
+        $st->bind_param('ss',$player,$xeri_type);
+        $st->execute();
+    }
+
     $mysqli->query("
         UPDATE deck
         SET drawn_by='$player'
         WHERE card_id IN (SELECT card_id FROM table_cards)
-    ");
-
-    // και το παιγμένο
-    $mysqli->query("
-        UPDATE deck
-        SET drawn_by='$player'
-        WHERE card_id=$card_id
+           OR card_id=$card_id
     ");
 
     $mysqli->query("DELETE FROM table_cards");
 
 } else {
 
-    // απλό παίξιμο
     $st = $mysqli->prepare("
-        INSERT INTO table_cards(card_id, played_by, placed_at)
-        VALUES (?, ?, NOW())
+        INSERT INTO table_cards(card_id,played_by,placed_at)
+        VALUES(?,?,NOW())
     ");
-    $st->bind_param('is', $card_id, $player);
+    $st->bind_param('is',$card_id,$player);
     $st->execute();
 }
 
 /* ================= CHANGE TURN ================= */
-$next = ($player === 'P1') ? 'P2' : 'P1';
-$st = $mysqli->prepare("
-    UPDATE game_status SET turn=?, last_change=NOW()
-");
-$st->bind_param('s', $next);
+$next = ($player==='P1')?'P2':'P1';
+$st = $mysqli->prepare("UPDATE game_status SET turn=?,last_change=NOW()");
+$st->bind_param('s',$next);
 $st->execute();
 
 /* ================= END ROUND CHECK ================= */
-$res = $mysqli->query("SELECT COUNT(*) AS c FROM hands");
+$res = $mysqli->query("SELECT COUNT(*) c FROM hands");
 $hands_left = (int)$res->fetch_assoc()['c'];
 
 if ($hands_left === 0) {
-
-    // υπάρχουν φύλλα στο deck;
-    $res = $mysqli->query("
-        SELECT COUNT(*) AS c FROM deck WHERE is_drawn=0
-    ");
+ sleep(7);
+    $res = $mysqli->query("SELECT COUNT(*) c FROM deck WHERE is_drawn=0");
     $remaining = (int)$res->fetch_assoc()['c'];
 
     if ($remaining >= 12) {
-
-    // 👉 αλλάζουμε ΚΑΤΑΣΤΑΣΗ
-    $mysqli->query("
-        UPDATE game_status
-        SET status='dealing',
-            turn='P1',
-            last_change=NOW()
-    ");
-
-    echo json_encode([
-        'success'=>true,
-        'round_end'=>true
-    ]);
-    exit;
-}
-
-    else {
-
-    // ⛔ φύλλα που έμειναν κάτω ΔΕΝ ανήκουν σε κανέναν
-    $mysqli->query("
-        UPDATE deck
-        SET drawn_by = NULL
-        WHERE card_id IN (SELECT card_id FROM table_cards)
-    ");
-
-    require_once 'score.php';
-    $final = calculate_round_score();
-
-    if ($final['P1'] > $final['P2']) {
-        $winner = 'P1';
-    } elseif ($final['P2'] > $final['P1']) {
-        $winner = 'P2';
-    } else {
-        $winner = 'draw';
-    }
-
-    // 1 πόντος στον νικητή ΠΑΙΧΝΙΔΙΟΥ
-    if ($winner !== 'draw') {
+        // 🔥 ΑΠΛΑ αλλάζουμε status – ΔΕΝ κάνουμε exit
         $mysqli->query("
-            UPDATE players
-            SET score = score + 1
-            WHERE player='$winner'
+            UPDATE game_status
+            SET status='dealing', turn='P1', last_change=NOW()
         ");
     }
+    else {
+        // τελευταίος γύρος – φύλλα κάτω δεν μετράνε
+        $mysqli->query("
+            UPDATE deck SET drawn_by=NULL
+            WHERE card_id IN (SELECT card_id FROM table_cards)
+        ");
 
-    $st = $mysqli->prepare("
-        UPDATE game_status
-        SET status='game_end',
-            result=?,
-            turn=NULL,
-            last_change=NOW()
-    ");
-    $st->bind_param('s', $winner);
-    $st->execute();
+        require_once 'score.php';
+        $final = calculate_round_score();
 
-    echo json_encode([
-        'success'  => true,
-        'game_end' => true,
-        'winner'   => $winner,
-        'score'    => $final
-    ], JSON_PRETTY_PRINT);
+        $winner = ($final['P1']>$final['P2'])?'P1':
+                  (($final['P2']>$final['P1'])?'P2':'draw');
 
-    exit;
-}
+        if ($winner!=='draw') {
+            $mysqli->query("
+                UPDATE players SET score=score+1
+                WHERE player='$winner'
+            ");
+        }
 
-
+        $st = $mysqli->prepare("
+            UPDATE game_status
+            SET status='game_end', result=?, turn=NULL, last_change=NOW()
+        ");
+        $st->bind_param('s',$winner);
+        $st->execute();
+    }
 }
 
 /* ================= RESPONSE ================= */
 echo json_encode([
-    'success'   => true,
-    'collected' => $collect,
-    'xeri'      => $is_xeri,
-    'xeri_type' => $xeri_type
+    'success'=>true,
+    'collected'=>$collect,
+    'xeri'=>$is_xeri,
+    'xeri_type'=>$xeri_type
 ], JSON_PRETTY_PRINT);
-
