@@ -72,22 +72,37 @@ function load_status() {
             }
        if (st.status === 'aborted') {
 
-    clearInterval(window.statusInterval);
+    // ⛔ σταματάμε polling ΜΙΑ ΦΟΡΑ
+    if (window.statusInterval) {
+        clearInterval(window.statusInterval);
+        window.statusInterval = null;
+    }
 
     let me = localStorage.getItem('player');
 
-    // αν εγώ είμαι ο νικητής
+    // 🏆 ΝΙΚΗΤΗΣ
     if (st.result === me) {
 
-        if (confirm('🏆 Νίκησες! Ο αντίπαλος άργησε να παίξει.\n\nΠάτα ΟΚ για επιστροφή στην αρχή')) {
-            end_game();
-        }
+        // ⏱️ μικρό delay για να μην μπλοκαριστεί το confirm
+        setTimeout(() => {
+            if (confirm(
+                '🏆 Νίκησες!\n' +
+                'Ο αντίπαλος άργησε να παίξει.\n\n' +
+                'Πάτα ΟΚ για επιστροφή στην αρχή'
+            )) {
+                end_game();
+            }
+        }, 200);
 
     } else {
-        // εγώ άργησα → απλό refresh
-        end_game();
+
+        // ❌ ΗΤΤΗΜΕΝΟΣ → απλό reset ΧΩΡΙΣ confirm
+        setTimeout(() => {
+            end_game();
+        }, 200);
     }
 }
+
 
 
 if (st.status === 'game_end') {
@@ -96,19 +111,27 @@ if (st.status === 'game_end') {
     load_game_state(); // τελευταία ενημέρωση
 
     let me = localStorage.getItem('player');
-    let msg = (st.result === me)
-        ? '🎉 Νίκησες!'
-        : (st.result === 'draw')
-            ? '🤝 Ισοπαλία'
-            : '❌ Έχασες';
 
-    $('#game_end_msg').text(msg);
+    let msg =
+        (st.result === me)
+            ? '🎉 Νίκησες!'
+            : (st.result === 'draw')
+                ? '🤝 Ισοπαλία'
+                : '❌ Έχασες';
+
+    let scoreText =
+        `Σκορ:\n` +
+        `P1: ${st.score_p1} πόντοι\n` +
+        `P2: ${st.score_p2} πόντοι`;
+
+    $('#game_end_msg').text(msg + '\n\n' + scoreText);
     $('#game_end_box').show();
 
     $('#game_end_ok').off().on('click', function () {
         end_game();
     });
 }
+
 
 
 

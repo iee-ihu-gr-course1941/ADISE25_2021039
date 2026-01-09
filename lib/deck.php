@@ -148,6 +148,11 @@ $st = $mysqli->prepare("
         last_change=NOW()
 ");
 $st->execute();
+$mysqli->query("
+    UPDATE players
+    SET last_action = NOW()
+    WHERE username IS NOT NULL
+");
 
 echo json_encode([
     'success'      => true,

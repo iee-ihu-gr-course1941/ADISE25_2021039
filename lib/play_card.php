@@ -127,6 +127,14 @@ if ($collect) {
     $st->bind_param('is',$card_id,$player);
     $st->execute();
 }
+/* ================= UPDATE last_action ================= */
+$st = $mysqli->prepare("
+    UPDATE players
+    SET last_action = NOW()
+    WHERE player = ?
+");
+$st->bind_param('s', $player);
+$st->execute();
 
 /* ================= CHANGE TURN ================= */
 $next = ($player==='P1')?'P2':'P1';

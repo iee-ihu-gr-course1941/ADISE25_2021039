@@ -18,12 +18,30 @@ function read_status() {
 function show_status() {
     global $mysqli;
 
-    $res = $mysqli->query("SELECT * FROM game_status");
-    echo json_encode(
-        $res->fetch_all(MYSQLI_ASSOC),
-        JSON_PRETTY_PRINT
-    );
+    require_once 'score.php';
+
+    // game status
+    $res = $mysqli->query("SELECT * FROM game_status LIMIT 1");
+    $status = $res->fetch_assoc();
+
+    // αν τελείωσε το παιχνίδι → υπολόγισε σκορ
+    if ($status['status'] === 'game_end') {
+        $score = calculate_round_score();
+    } else {
+        $score = ['P1'=>0, 'P2'=>0];
+    }
+
+    echo json_encode([[
+        'status'      => $status['status'],
+        'turn'        => $status['turn'],
+        'result'      => $status['result'],
+        'last_change' => $status['last_change'],
+        'score_p1'    => $score['P1'],
+        'score_p2'    => $score['P2']
+    ]], JSON_PRETTY_PRINT);
 }
+
+
 
 /*
  * ΚΕΝΤΡΙΚΗ ΛΟΓΙΚΗ ΚΑΤΑΣΤΑΣΗΣ ΠΑΙΧΝΙΔΙΟΥ
@@ -37,32 +55,38 @@ function update_game_status() {
     /* ================= TIMEOUT ABORT ================= */
     if ($status['status'] === 'playing' && $status['turn'] !== null) {
 
-        // τελευταία ενέργεια
-        $res = $mysqli->query("
-            SELECT MAX(placed_at) AS last_play
-            FROM table_cards
+        // παίκτης που έχει σειρά
+        $loser = $status['turn'];
+
+        // τελευταία ενέργεια του παίκτη αυτού
+        $st = $mysqli->prepare("
+            SELECT last_action
+            FROM players
+            WHERE player = ?
         ");
-        $last_play = $res->fetch_assoc()['last_play'];
+        $st->bind_param('s', $loser);
+        $st->execute();
+        $last_action = $st->get_result()->fetch_assoc()['last_action'];
 
-        $last_action = $last_play ?? $status['last_change'];
+         if ($last_action !== null) {
 
-        // ⏰ 10 λεπτά
-        if (strtotime($last_action) < time() - 60) {
+            // ⏰ 1 λεπτό για test (600 για 10 λεπτά)
+            if (strtotime($last_action) < time() - 60) {
 
-            $loser  = $status['turn'];
-            $winner = ($loser === 'P1') ? 'P2' : 'P1';
+                $winner = ($loser === 'P1') ? 'P2' : 'P1';
 
-            $st = $mysqli->prepare("
-                UPDATE game_status
-                SET status='aborted',
-                    result=?,
-                    turn=NULL,
-                    last_change=NOW()
-            ");
-            $st->bind_param('s', $winner);
-            $st->execute();
+                $st = $mysqli->prepare("
+                    UPDATE game_status
+                    SET status='aborted',
+                        result=?,
+                        turn=NULL,
+                        last_change=NOW()
+                ");
+                $st->bind_param('s', $winner);
+                $st->execute();
 
-            return;
+                return;
+            }
         }
     }
 
@@ -77,28 +101,23 @@ function update_game_status() {
     if ($active === 0) {
         $mysqli->query("
             UPDATE game_status
-            SET status='not_active',
-                turn=NULL,
-                last_change=NOW()
+            SET status='not_active', turn=NULL, last_change=NOW()
         ");
     }
     elseif ($active === 1) {
         $mysqli->query("
             UPDATE game_status
-            SET status='waiting_player',
-                turn=NULL,
-                last_change=NOW()
+            SET status='waiting_player', turn=NULL, last_change=NOW()
         ");
     }
     elseif ($active === 2 && $status['status'] === 'waiting_player') {
         $mysqli->query("
             UPDATE game_status
-            SET status='dealing',
-                turn='P1',
-                last_change=NOW()
+            SET status='dealing', turn='P1', last_change=NOW()
         ");
     }
 }
+
 
 
 
