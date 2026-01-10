@@ -746,3 +746,11 @@ URI=/ADISE25_2021039/lib/players.php/player/P2
 METHOD=PUT
 BODY={"username":"hn"}
 
+URI=/ADISE25_2021039/lib/players.php/player/P1
+METHOD=PUT
+BODY={"username":"b"}
+
+URI=/ADISE25_2021039/lib/players.php/player/P2
+METHOD=PUT
+BODY={"username":"nm"}
+

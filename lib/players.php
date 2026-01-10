@@ -1,56 +1,50 @@
 <?php
-
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-file_put_contents(
-    __DIR__ . '/../logs/debug.txt',
-    "URI=".$_SERVER['REQUEST_URI']."\n".
-    "METHOD=".$_SERVER['REQUEST_METHOD']."\n".
-    "BODY=".file_get_contents('php://input')."\n\n",
-    FILE_APPEND
-);
-
-
 require_once 'db2connect.php';
+require_once 'game_status.php';
+
 header('Content-Type: application/json');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
+/* ================= METHOD ================= */
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode(['error' => 'Only PUT allowed']);
+    echo json_encode(['error'=>'Only POST allowed']);
     exit;
 }
 
-$path = $_SERVER['PATH_INFO'] ?? '';
-$parts = explode('/', trim($path, '/'));
-
-if (count($parts) < 2) {
-    http_response_code(400);
-    echo json_encode(['error' => 'No player specified']);
-    exit;
-}
-
-$player = trim(end($parts));
- // P1 ή P2
-
+/* ================= INPUT JSON ================= */
 $input = json_decode(file_get_contents('php://input'), true);
-if (!isset($input['username']) || trim($input['username']) === '') {
+
+if (
+    !isset($input['player']) ||
+    !isset($input['username']) ||
+    trim($input['username']) === ''
+) {
     http_response_code(400);
-    echo json_encode(['error' => 'No username provided']);
+    echo json_encode(['error'=>'player or username missing']);
     exit;
 }
 
+$player   = $input['player'];   // P1 ή P2
 $username = trim($input['username']);
+
+if ($player !== 'P1' && $player !== 'P2') {
+    http_response_code(400);
+    echo json_encode(['error'=>'Invalid player']);
+    exit;
+}
+
+
+/* ================= CHECK PLAYER ================= */
 $check = $mysqli->prepare("
-    SELECT username, last_action 
-    FROM players 
+    SELECT username, last_action
+    FROM players
     WHERE player = ?
 ");
 $check->bind_param('s', $player);
 $check->execute();
-$res = $check->get_result();
-$row = $res->fetch_assoc();
+$row = $check->get_result()->fetch_assoc();
 
+/* ενεργός τα τελευταία 5 λεπτά */
 if ($row && $row['username'] !== null &&
     strtotime($row['last_action']) > time() - 300) {
 
@@ -61,29 +55,27 @@ if ($row && $row['username'] !== null &&
     exit;
 }
 
+/* ================= LOGIN ================= */
+$token = md5($username . microtime(true));
+
 $stmt = $mysqli->prepare("
-    UPDATE players 
-    SET username = ?, 
-        token = MD5(CONCAT(?, NOW())),
+    UPDATE players
+    SET username = ?,
+        token = ?,
         last_action = NOW()
     WHERE player = ?
 ");
-
-if (!$stmt) {
-    http_response_code(500);
-    echo json_encode(['error' => $mysqli->error]);
-    exit;
-}
-
-$stmt->bind_param('sss', $username, $username, $player);
+$stmt->bind_param('sss', $username, $token, $player);
 $stmt->execute();
-require_once 'game_status.php';
+
+/* ================= UPDATE STATUS ================= */
 update_game_status();
 
-$res = $mysqli->prepare("SELECT * FROM players WHERE player = ?");
-$res->bind_param('s', $player);
-$res->execute();
-$data = $res->get_result()->fetch_all(MYSQLI_ASSOC);
-
-echo json_encode($data, JSON_PRETTY_PRINT);
+/* ================= RESPONSE ================= */
+echo json_encode([
+    'success' => true,
+    'player'  => $player,
+    'username'=> $username,
+    'token'   => $token
+], JSON_PRETTY_PRINT);
 
