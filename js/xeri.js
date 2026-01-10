@@ -13,7 +13,7 @@ function login_to_game() {
     }
 
     $.ajax({
-        url: "/ADISE25_2021039/lib/players.php",
+        url: "/players.php",
         method: 'POST',
         dataType: 'json',
         data: {
