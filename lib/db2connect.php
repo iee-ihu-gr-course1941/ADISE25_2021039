@@ -5,10 +5,10 @@ require_once "db_upass.php";
 
 $user=$DB_USER;
 $pass=$DB_PASS;
-
-
+$user1='iee2021039';
+$pass1='Mariaene2!';
 if(gethostname()=='users.iee.ihu.gr') {
-	$mysqli = new mysqli($host, $user, $pass, $db,null,'/home/student/iee/2021/iee2021039/mysql/run/mysql.sock');
+	$mysqli = new mysqli($host, $user1, $pass1, $db,null,'/home/student/iee/2021/iee2021039/mysql/run/mysql.sock');
 } else {
         $mysqli = new mysqli($host, $user, $pass, $db);
 }
