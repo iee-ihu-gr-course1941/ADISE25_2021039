@@ -3,7 +3,16 @@ $(function () {
 });
 
 /* ================= LOGIN ================= */
-$.ajax({
+function login_to_game() {
+    let username = $('#username').val().trim();
+    let player   = $('#player').val();
+
+    if (username === '') {
+        alert('Δώσε όνομα χρήστη');
+        return;
+    }
+
+   $.ajax({
     url: "/~iee2021039/ADISE25_2021039/lib/players.php",
     method: "POST",
     contentType: "application/json",
@@ -28,6 +37,8 @@ $.ajax({
         alert(xhr.responseText);
     }
 });
+
+}
 
 function load_xeria() {
     $.ajax({
