@@ -3,41 +3,31 @@ $(function () {
 });
 
 /* ================= LOGIN ================= */
-function login_to_game() {
-    let username = $('#username').val().trim();
-    let player   = $('#player').val();
+$.ajax({
+    url: "/~iee2021039/ADISE25_2021039/lib/players.php",
+    method: "POST",
+    contentType: "application/json",
+    dataType: "json",
+    data: JSON.stringify({
+        username: username,
+        player: player
+    }),
+    success: function (data) {
+        console.log('LOGIN:', data);
 
-    if (username === '') {
-        alert('Δώσε όνομα χρήστη');
-        return;
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('player', data.player);
+
+        $('#game_initializer').hide();
+        alert('Συνδέθηκες ως ' + data.player);
+
+        load_status();
+        window.statusInterval = setInterval(load_status, 2000);
+    },
+    error: function (xhr) {
+        alert(xhr.responseText);
     }
-
-    $.ajax({
-        url:"/~iee2021039/ADISE25_2021039/lib/players.php",
-        method: 'POST',
-        dataType: 'json',
-        data: {
-            action: 'login',
-            username: username,
-            player: player
-        },
-        success: function (data) {
-            console.log('LOGIN:', data);
-
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('player', data.player);
-
-            $('#game_initializer').hide();
-            alert('Συνδέθηκες ως ' + data.player);
-
-            load_status();
-            window.statusInterval = setInterval(load_status, 2000);
-        },
-        error: function (xhr) {
-            alert(xhr.responseText);
-        }
-    });
-}
+});
 
 function load_xeria() {
     $.ajax({
