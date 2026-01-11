@@ -42,7 +42,7 @@ function login_to_game() {
 
 function load_xeria() {
     $.ajax({
-        url: "/ADISE25_2021039/lib/xeri_status.php",
+        url: "/~iee2021039/ADISE25_2021039/lib/xeri_status.php",
         method: "GET",
         dataType: "json",
         success: function(data) {
@@ -57,7 +57,7 @@ let gameEnded = false;
 /* ================= STATUS ================= */
 function load_status() {
     $.ajax({
-       url: "/ADISE25_2021039/lib/game_status_api.php",
+       url: "/~iee2021039/ADISE25_2021039/lib/game_status_api.php",
         method: 'GET',
         dataType: 'json',
         success: function (data) {
@@ -147,7 +147,7 @@ if (st.status === 'game_end') {
 }
 function end_game() {
     $.ajax({
-        url: "/ADISE25_2021039/lib/end_game.php",
+        url: "/~iee2021039/ADISE25_2021039/lib/end_game.php",
         method: "POST",
         complete: function () {
             localStorage.clear();
@@ -160,7 +160,7 @@ function end_game() {
 /* ================= GAME STATE ================= */
 function load_game_state() {
     $.ajax({
-        url: "/ADISE25_2021039/lib/game_state.php",
+        url: "/~iee2021039/ADISE25_2021039/lib/game_state.php",
         method: 'GET',
         headers: {
             'X-TOKEN': localStorage.getItem('token')
@@ -242,7 +242,7 @@ function render_table(cards) {
 
 function play_card(cardId) {
     $.ajax({
-        url: "/ADISE25_2021039/lib/play_card.php",
+        url: "/~iee2021039/ADISE25_2021039/lib/play_card.php",
         method: 'POST',
         headers: {
             'X-TOKEN': localStorage.getItem('token')
