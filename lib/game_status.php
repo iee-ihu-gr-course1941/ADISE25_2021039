@@ -47,10 +47,17 @@ function show_status() {
  * ΚΕΝΤΡΙΚΗ ΛΟΓΙΚΗ ΚΑΤΑΣΤΑΣΗΣ ΠΑΙΧΝΙΔΙΟΥ
  */
 function update_game_status() {
+    
     global $mysqli;
+
 
     $status = read_status();
     if (!$status) return;
+file_put_contents(
+    __DIR__.'/../logs/debug.txt',
+    date('H:i:s')." status={$status['status']} turn={$status['turn']} last_change={$status['last_change']}\n",
+    FILE_APPEND
+);
 
     /* ================= TIMEOUT ABORT ================= */
     if ($status['status'] === 'playing' && $status['turn'] !== null) {
