@@ -54,7 +54,7 @@ function update_game_status() {
     $status = read_status();
     if (!$status) return;
 file_put_contents(
-    __DIR__.'/../logs/debug.txt',
+    __DIR__.'/../../logs/debug.txt',
     date('H:i:s')." status={$status['status']} turn={$status['turn']} last_change={$status['last_change']}\n",
     FILE_APPEND
 );
