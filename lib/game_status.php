@@ -79,6 +79,8 @@ function update_game_status() {
         }
     }
 
+
+
     /* ================= ACTIVE PLAYERS ================= */
     $res = $mysqli->query("
         SELECT COUNT(*) c
@@ -90,29 +92,22 @@ function update_game_status() {
     if ($active === 0) {
         $mysqli->query("
             UPDATE game_status
-            SET status='not_active',
-                turn=NULL,
-                last_change=NOW()
+            SET status='not_active', turn=NULL, last_change=NOW()
         ");
     }
     elseif ($active === 1) {
         $mysqli->query("
             UPDATE game_status
-            SET status='waiting_player',
-                turn=NULL,
-                last_change=NOW()
+            SET status='waiting_player', turn=NULL, last_change=NOW()
         ");
     }
     elseif ($active === 2 && $status['status'] === 'waiting_player') {
         $mysqli->query("
             UPDATE game_status
-            SET status='playing',
-                turn='P1',
-                last_change=NOW()
+            SET status='dealing', turn='P1', last_change=NOW()
         ");
     }
 }
-
 
 
 
