@@ -53,34 +53,50 @@ function update_game_status() {
     if (!$status) return;
 
     /* ================= TIMEOUT ABORT ================= */
-  if ($status['status'] === 'playing' && $status['turn'] !== null) {
+  /* ================= TIMEOUT ABORT ================= */
+if ($status['status'] === 'playing' && $status['turn'] !== null) {
 
-    $idle = time() - strtotime($status['last_change']);
+    $loser = $status['turn'];
 
-    // ⏰ 60 sec για test (600 για κανονικό)
-    if ($idle >= 60) {
+    $st = $mysqli->prepare("
+        SELECT last_action
+        FROM players
+        WHERE player = ?
+    ");
+    $st->bind_param('s', $loser);
+    $st->execute();
+    $row = $st->get_result()->fetch_assoc();
 
-        $loser  = $status['turn'];
-        $winner = ($loser === 'P1') ? 'P2' : 'P1';
+    if ($row && $row['last_action'] !== null) {
 
-        $st = $mysqli->prepare("
-            UPDATE game_status
-            SET status='aborted',
-                result=?,
-                turn=NULL,
-                last_change=NOW()
-        ");
-        $st->bind_param('s', $winner);
-        $st->execute();
+        $idle = time() - strtotime($row['last_action']);
 
-        echo json_encode([
-            'status' => 'aborted',
-            'result' => $winner,
-            'idle'   => $idle
-        ]);
-        exit;
+        // ⏰ 60 sec για test
+        if ($idle >= 60) {
+
+            $winner = ($loser === 'P1') ? 'P2' : 'P1';
+
+            $st = $mysqli->prepare("
+                UPDATE game_status
+                SET status='aborted',
+                    result=?,
+                    turn=NULL,
+                    last_change=NOW()
+            ");
+            $st->bind_param('s', $winner);
+            $st->execute();
+
+            echo json_encode([
+                'status' => 'aborted',
+                'result' => $winner,
+                'idle'   => $idle
+            ]);
+            exit;
+        }
     }
 }
+
+
 
     /* ================= ACTIVE PLAYERS ================= */
     $res = $mysqli->query("
