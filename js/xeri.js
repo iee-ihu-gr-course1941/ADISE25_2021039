@@ -77,10 +77,9 @@ function load_status() {
        if (st.status === 'aborted') {
 
     // ⛔ σταματάμε polling ΜΙΑ ΦΟΡΑ
-    if (window.statusInterval) {
+    
         clearInterval(window.statusInterval);
-        window.statusInterval = null;
-    }
+      
 
     let me = localStorage.getItem('player');
 
@@ -88,7 +87,7 @@ function load_status() {
     if (st.result === me) {
 
         // ⏱️ μικρό delay για να μην μπλοκαριστεί το confirm
-        setTimeout(() => {
+        
             if (confirm(
                 '🏆 Νίκησες!\n' +
                 'Ο αντίπαλος άργησε να παίξει.\n\n' +
@@ -96,14 +95,14 @@ function load_status() {
             )) {
                 end_game();
             }
-        }, 200);
+       
 
     } else {
 
         // ❌ ΗΤΤΗΜΕΝΟΣ → απλό reset ΧΩΡΙΣ confirm
-        setTimeout(() => {
+        
             end_game();
-        }, 200);
+        
     }
 }
 

@@ -53,42 +53,34 @@ function update_game_status() {
     if (!$status) return;
 
     /* ================= TIMEOUT ABORT ================= */
-    if ($status['status'] === 'playing' && $status['turn'] !== null) {
+  if ($status['status'] === 'playing' && $status['turn'] !== null) {
 
-        // παίκτης που έχει σειρά
-        $loser = $status['turn'];
+    $idle = time() - strtotime($status['last_change']);
 
-        // τελευταία ενέργεια του παίκτη αυτού
+    // ⏰ 60 sec για test (600 για κανονικό)
+    if ($idle >= 60) {
+
+        $loser  = $status['turn'];
+        $winner = ($loser === 'P1') ? 'P2' : 'P1';
+
         $st = $mysqli->prepare("
-            SELECT last_action
-            FROM players
-            WHERE player = ?
+            UPDATE game_status
+            SET status='aborted',
+                result=?,
+                turn=NULL,
+                last_change=NOW()
         ");
-        $st->bind_param('s', $loser);
+        $st->bind_param('s', $winner);
         $st->execute();
-        $last_action = $st->get_result()->fetch_assoc()['last_action'];
 
-         if ($last_action !== null) {
-
-            // ⏰ 1 λεπτό για test (600 για 10 λεπτά)
-            if (strtotime($last_action) < time() - 60) {
-
-                $winner = ($loser === 'P1') ? 'P2' : 'P1';
-
-                $st = $mysqli->prepare("
-                    UPDATE game_status
-                    SET status='aborted',
-                        result=?,
-                        turn=NULL,
-                        last_change=NOW()
-                ");
-                $st->bind_param('s', $winner);
-                $st->execute();
-
-                return;
-            }
-        }
+        echo json_encode([
+            'status' => 'aborted',
+            'result' => $winner,
+            'idle'   => $idle
+        ]);
+        exit;
     }
+}
 
     /* ================= ACTIVE PLAYERS ================= */
     $res = $mysqli->query("
