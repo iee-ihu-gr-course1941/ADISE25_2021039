@@ -82,7 +82,7 @@ file_put_contents(
             $st->execute();
 
             // ⛔ ΣΤΑΜΑΤΑΜΕ ΕΔΩ – δεν ελέγχουμε active players
-            return;
+            exit;
         }
     }
 
