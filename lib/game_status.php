@@ -97,7 +97,7 @@ function update_game_status() {
         $st2->bind_param('s', $winner);
         $st2->execute();
 
-        return;
+        exit;
     }
 
 
