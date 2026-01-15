@@ -65,7 +65,7 @@ if ($status['status'] === 'aborted') {
         SELECT COUNT(*) AS aborted
         FROM players
         WHERE username IS NOT NULL
-          AND last_action < (NOW() - INTERVAL 20 MINUTE)
+          AND last_action < (NOW() - INTERVAL 1 MINUTE)
     ");
     $st->execute();
     $aborted = (int)$st->get_result()->fetch_assoc()['aborted'];
