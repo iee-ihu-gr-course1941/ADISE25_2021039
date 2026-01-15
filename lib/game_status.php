@@ -55,7 +55,9 @@ function update_game_status() {
     $res = $mysqli->query("SELECT * FROM game_status LIMIT 1");
     $status = $res->fetch_assoc();
     if (!$status) return;
-
+if ($status['status'] === 'aborted') {
+        return;
+    }
     /* ================= IDLE PLAYER CHECK ================= */
 
     // Πόσοι παίκτες είναι idle > 1 λεπτό (βάλε 20 MINUTE αν θες κανονικά)
@@ -97,9 +99,9 @@ function update_game_status() {
         $st2->bind_param('s', $winner);
         $st2->execute();
 
-        exit;
+        return;
     }
-
+ 
 
 
     /* ================= ACTIVE PLAYERS ================= */
