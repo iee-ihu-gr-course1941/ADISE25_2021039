@@ -78,15 +78,17 @@ function load_status() {
                 clearInterval(window.statusInterval);
 
                 let me = localStorage.getItem('player');
+let loser = st.turn;
+    let winner = (loser === 'P1') ? 'P2' : 'P1';
 
-                if (st.result === me) {
-                    alert('🏆 Νίκησες! Ο αντίπαλος άργησε.');
-                } else {
-                    alert('❌ Έχασες λόγω καθυστέρησης.');
-                }
+    if (me === winner) {
+        alert('🏆 Νίκησες! Ο αντίπαλος άργησε.');
+    } else {
+        alert('❌ Έχασες λόγω καθυστέρησης.');
+    }
 
-                end_game();
-            }
+    end_game();
+}
 
 
 if (st.status === 'game_end') {
