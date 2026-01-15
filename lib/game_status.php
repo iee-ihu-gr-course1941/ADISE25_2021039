@@ -54,24 +54,71 @@ function update_game_status() {
     $status = read_status();
     if (!$status) return;
 
+file_put_contents(
+    __DIR__.'/../logs/idle_debug.log',
+    date('H:i:s') .
+    " status={$status['status']}" .
+    " turn={$status['turn']}" .
+    " last_change={$status['last_change']}" .
+    " idle=".(time() - strtotime($status['last_change'])) . "\n",
+    FILE_APPEND
+);
 
-   
+    /* ================= TIMEOUT ABORT ================= */
+    if ($status['status'] === 'playing' && $status['turn'] !== null) {
 
-    // Έλεγχος για αδράνεια 5 λεπτών
-    if ($status['status'] === 'playing' &&
-        (time() - strtotime($status['last_change']) > 70)) {
+        // χρόνος αδράνειας από τη στιγμή που άλλαξε η σειρά
+        $idle = time() - strtotime($status['last_change']);
 
-        // Αλλαγή κατάστασης σε aborted
+        // ⏰ 60 sec για test (600 για κανονικό)
+        if ($idle >= 60) {
+
+            $loser  = $status['turn'];
+            $winner = ($loser === 'P1') ? 'P2' : 'P1';
+
+            $st = $mysqli->prepare("
+                UPDATE game_status
+                SET status='aborted',
+                    result=?,
+                    turn=NULL,
+                    last_change=NOW()
+            ");
+            $st->bind_param('s', $winner);
+            $st->execute();
+
+            // ⛔ ΣΤΑΜΑΤΑΜΕ ΕΔΩ – δεν ελέγχουμε active players
+            exit;
+        }
+
+    }
+
+
+
+    /* ================= ACTIVE PLAYERS ================= */
+    $res = $mysqli->query("
+        SELECT COUNT(*) c
+        FROM players
+        WHERE username IS NOT NULL
+    ");
+    $active = (int)$res->fetch_assoc()['c'];
+
+    if ($active === 0) {
         $mysqli->query("
             UPDATE game_status
-            SET status='aborted', turn=NULL, last_change=NOW()
+            SET status='not_active', turn=NULL, last_change=NOW()
         ");
-
-        file_put_contents(
-            __DIR__.'/../logs/idle_debug.log',
-            date('H:i:s') . " Game aborted due to inactivity\n",
-            FILE_APPEND
-        );
+    }
+    elseif ($active === 1) {
+        $mysqli->query("
+            UPDATE game_status
+            SET status='waiting_player', turn=NULL, last_change=NOW()
+        ");
+    }
+    elseif ($active === 2 && $status['status'] === 'waiting_player') {
+        $mysqli->query("
+            UPDATE game_status
+            SET status='dealing', turn='P1', last_change=NOW()
+        ");
     }
 }
 

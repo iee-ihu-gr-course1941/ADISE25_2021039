@@ -61,52 +61,33 @@ function load_status() {
         method: 'GET',
         dataType: 'json',
         success: function (data) {
-            if (!data || !Array.isArray(data) ||data.length === 0) return;
+            if (!data || data.length === 0) return;
 
             let st = data[0];
-
+            console.log('STATUS:', st);
             $('#game_info').html(
                 'Κατάσταση παιχνιδιού: <b>' + st.status + '</b><br>' +
                 'Σειρά: ' + (st.turn ?? '-')
             );
 
             // 🔥 ΑΥΤΟ ΕΛΕΙΠΕ
-           
-       if (st.status === 'aborted') {
-
-    // ⛔ σταματάμε polling ΜΙΑ ΦΟΡΑ
-    
-        clearInterval(window.statusInterval);
-      
-
-    let me = localStorage.getItem('player');
-
-    // 🏆 ΝΙΚΗΤΗΣ
-    if (st.result === me) {
-
-        
-        
-            if (confirm(
-                '🏆 Νίκησες!\n' +
-                'Ο αντίπαλος άργησε να παίξει.\n\n' +
-                'Πάτα ΟΚ για επιστροφή στην αρχή'
-            )) {
-                end_game();
-            }
-       
-
-    } else {
-
-        // ❌ ΗΤΤΗΜΕΝΟΣ → απλό reset ΧΩΡΙΣ confirm
-        
-            end_game();
-        
-    }
-}
-
- if (st.status === 'playing') {
+            if (st.status === 'playing') {
                 load_game_state();
             }
+        if (st.status === 'aborted') {
+                clearInterval(window.statusInterval);
+
+                let me = localStorage.getItem('player');
+
+                if (st.result === me) {
+                    alert('🏆 Νίκησες! Ο αντίπαλος άργησε.');
+                } else {
+                    alert('❌ Έχασες λόγω καθυστέρησης.');
+                }
+
+                end_game();
+            }
+
 
 if (st.status === 'game_end') {
 
