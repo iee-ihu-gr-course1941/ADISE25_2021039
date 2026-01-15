@@ -48,48 +48,56 @@ function show_status() {
  */
 function update_game_status() {
     
+  
     global $mysqli;
 
-
-    $status = read_status();
+    // Πάρε τρέχουσα κατάσταση
+    $res = $mysqli->query("SELECT * FROM game_status LIMIT 1");
+    $status = $res->fetch_assoc();
     if (!$status) return;
 
-file_put_contents(
-    __DIR__.'/../logs/idle_debug.log',
-    date('H:i:s') .
-    " status={$status['status']}" .
-    " turn={$status['turn']}" .
-    " last_change={$status['last_change']}" .
-    " idle=".(time() - strtotime($status['last_change'])) . "\n",
-    FILE_APPEND
-);
+    /* ================= IDLE PLAYER CHECK ================= */
 
-    /* ================= TIMEOUT ABORT ================= */
-    if ($status['status'] === 'playing' && $status['turn'] !== null) {
+    // Πόσοι παίκτες είναι idle > 1 λεπτό (βάλε 20 MINUTE αν θες κανονικά)
+    $st = $mysqli->prepare("
+        SELECT COUNT(*) AS aborted
+        FROM players
+        WHERE username IS NOT NULL
+          AND last_action < (NOW() - INTERVAL 1 MINUTE)
+    ");
+    $st->execute();
+    $aborted = (int)$st->get_result()->fetch_assoc()['aborted'];
 
-        // χρόνος αδράνειας από τη στιγμή που άλλαξε η σειρά
-        $idle = time() - strtotime($status['last_change']);
+    if ($aborted > 0 && $status['status'] === 'playing') {
 
-        // ⏰ 60 sec για test (600 για κανονικό)
-        if ($idle >= 60) {
+        // Καθάρισε τον idle παίκτη
+        $mysqli->query("
+            UPDATE players
+            SET username = NULL, token = NULL
+            WHERE last_action < (NOW() - INTERVAL 1 MINUTE)
+        ");
 
-            $loser  = $status['turn'];
-            $winner = ($loser === 'P1') ? 'P2' : 'P1';
+        // Βρες νικητή = όποιος έμεινε
+        $res = $mysqli->query("
+            SELECT player
+            FROM players
+            WHERE username IS NOT NULL
+            LIMIT 1
+        ");
+        $winner = $res->fetch_assoc()['player'] ?? NULL;
 
-            $st = $mysqli->prepare("
-                UPDATE game_status
-                SET status='aborted',
-                    result=?,
-                    turn=NULL,
-                    last_change=NOW()
-            ");
-            $st->bind_param('s', $winner);
-            $st->execute();
+        // Κάνε abort το παιχνίδι
+        $st2 = $mysqli->prepare("
+            UPDATE game_status
+            SET status='aborted',
+                result=?,
+                turn=NULL,
+                last_change=NOW()
+        ");
+        $st2->bind_param('s', $winner);
+        $st2->execute();
 
-            // ⛔ ΣΤΑΜΑΤΑΜΕ ΕΔΩ – δεν ελέγχουμε active players
-            exit;
-        }
-
+        return;
     }
 
 
