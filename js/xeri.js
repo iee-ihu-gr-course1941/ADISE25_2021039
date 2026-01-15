@@ -61,7 +61,7 @@ function load_status() {
         method: 'GET',
         dataType: 'json',
         success: function (data) {
-            if (!data || data.length === 0) return;
+            if (!data || !Array.isArray(data) ||data.length === 0) return;
 
             let st = data[0];
 
@@ -71,9 +71,7 @@ function load_status() {
             );
 
             // 🔥 ΑΥΤΟ ΕΛΕΙΠΕ
-            if (st.status === 'playing') {
-                load_game_state();
-            }
+           
        if (st.status === 'aborted') {
 
     // ⛔ σταματάμε polling ΜΙΑ ΦΟΡΑ
@@ -86,7 +84,7 @@ function load_status() {
     // 🏆 ΝΙΚΗΤΗΣ
     if (st.result === me) {
 
-        // ⏱️ μικρό delay για να μην μπλοκαριστεί το confirm
+        
         
             if (confirm(
                 '🏆 Νίκησες!\n' +
@@ -106,7 +104,9 @@ function load_status() {
     }
 }
 
-
+ if (st.status === 'playing') {
+                load_game_state();
+            }
 
 if (st.status === 'game_end') {
 
