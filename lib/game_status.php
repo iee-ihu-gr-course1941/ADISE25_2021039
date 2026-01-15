@@ -76,7 +76,7 @@ if ($status['status'] === 'aborted') {
         $mysqli->query("
             UPDATE players
             SET username = NULL, token = NULL
-            WHERE last_action < (NOW() - INTERVAL 1 MINUTE)
+            WHERE last_action < (NOW() - INTERVAL 20 MINUTE)
         ");
 
         // Βρες νικητή = όποιος έμεινε
