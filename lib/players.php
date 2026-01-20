@@ -65,7 +65,7 @@ $stmt = $mysqli->prepare("
         last_action = NOW()
     WHERE player = ?
 ");
-$stmt->bind_param('sss', $username, $token, $player);
+$stmt->bind_param('sss', $username, $username, $player);
 $stmt->execute();
 
 /* UPDATE STATUS */
