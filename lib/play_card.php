@@ -4,7 +4,7 @@ require_once 'game_status.php';
 
 header('Content-Type: application/json');
 
-/* ================= AUTH ================= */
+/* AUTH */
 $token = $_SERVER['HTTP_X_TOKEN'] ?? '';
 
 $st = $mysqli->prepare("
@@ -24,7 +24,7 @@ if (!$me) {
 $player   = $me['player'];
 $opponent = ($player === 'P1') ? 'P2' : 'P1';
 
-/* ================= INPUT ================= */
+/* INPUT */
 $data = json_decode(file_get_contents('php://input'), true);
 $card_id = $data['card_id'] ?? null;
 
@@ -34,7 +34,7 @@ if (!$card_id) {
     exit;
 }
 
-/* ================= TURN CHECK ================= */
+/* TURN CHECK */
 $status = read_status();
 if ($status['turn'] !== $player) {
     http_response_code(403);
@@ -42,7 +42,7 @@ if ($status['turn'] !== $player) {
     exit;
 }
 
-/* ================= CARD INFO ================= */
+/* CARD INFO */
 $st = $mysqli->prepare("SELECT value, suit FROM deck WHERE card_id=?");
 $st->bind_param('i', $card_id);
 $st->execute();
@@ -53,7 +53,7 @@ if (!$played) {
     exit;
 }
 
-/* ================= REMOVE FROM HAND ================= */
+/* Remove apo xeria */
 $st = $mysqli->prepare("DELETE FROM hands WHERE card_id=? AND player=?");
 $st->bind_param('is', $card_id, $player);
 $st->execute();
@@ -63,7 +63,7 @@ if ($st->affected_rows === 0) {
     exit;
 }
 
-/* ================= TOP TABLE CARD ================= */
+/* panv karta */
 $res = $mysqli->query("
     SELECT t.card_id, d.value
     FROM table_cards t
@@ -73,7 +73,7 @@ $res = $mysqli->query("
 ");
 $top = $res->fetch_assoc();
 
-/* ================= RULES ================= */
+/* mazema */
 $collect   = false;
 $is_jack   = ($played['value'] === 'J');
 $is_xeri   = false;
@@ -86,7 +86,7 @@ if (!$is_jack && $top && $played['value'] === $top['value']) {
     $collect = true;
 }
 
-/* ================= ACTION ================= */
+/* ACTION */
 if ($collect) {
 
     $res = $mysqli->query("SELECT COUNT(*) c FROM table_cards");
@@ -127,7 +127,7 @@ if ($collect) {
     $st->bind_param('is',$card_id,$player);
     $st->execute();
 }
-/* ================= UPDATE last_action ================= */
+/* UPDATE last_action */
 $st = $mysqli->prepare("
     UPDATE players
     SET last_action = NOW()
@@ -136,13 +136,13 @@ $st = $mysqli->prepare("
 $st->bind_param('s', $player);
 $st->execute();
 
-/* ================= CHANGE TURN ================= */
+/* CHANGE TURN */
 $next = ($player==='P1')?'P2':'P1';
 $st = $mysqli->prepare("UPDATE game_status SET turn=?,last_change=NOW()");
 $st->bind_param('s',$next);
 $st->execute();
 
-/* ================= END ROUND CHECK ================= */
+/* END ROUND CHECK */
 $res = $mysqli->query("SELECT COUNT(*) c FROM hands");
 $hands_left = (int)$res->fetch_assoc()['c'];
 
@@ -152,14 +152,14 @@ if ($hands_left === 0) {
     $remaining = (int)$res->fetch_assoc()['c'];
 
     if ($remaining >= 12) {
-        // 🔥 ΑΠΛΑ αλλάζουμε status – ΔΕΝ κάνουμε exit
+        //  αλλάζω status οχι exit
         $mysqli->query("
             UPDATE game_status
             SET status='dealing', turn='P1', last_change=NOW()
         ");
     }
     else {
-        // τελευταίος γύρος – φύλλα κάτω δεν μετράνε
+        // τελευταίος γύρος τα φύλλα κάτω δεν μετράνε
         $mysqli->query("
             UPDATE deck SET drawn_by=NULL
             WHERE card_id IN (SELECT card_id FROM table_cards)
@@ -187,7 +187,7 @@ if ($hands_left === 0) {
     }
 }
 
-/* ================= RESPONSE ================= */
+/* RESPONSE */
 echo json_encode([
     'success'=>true,
     'collected'=>$collect,

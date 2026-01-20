@@ -29,7 +29,7 @@ switch ($action) {
         echo json_encode(['error' => 'Unknown action']);
 }
 
-/* ================= RESET ================= */
+/* RESET */
 function reset_game() {
     global $mysqli;
 
@@ -47,7 +47,7 @@ function reset_game() {
     echo json_encode(['success'=>true, 'message'=>'Game reset']);
 }
 
-/* ================= DEAL ================= */
+/* DEAL */
 function deal_cards(bool $with_table=false) {
     global $mysqli;
 
@@ -82,7 +82,7 @@ function deal_cards(bool $with_table=false) {
         exit;
     }
 
-    /* === 6 φύλλα σε κάθε παίκτη === */
+    /* 6 φύλλα σε κάθε παίκτη */
     foreach (['P1','P2'] as $player) {
 
         $cards = $mysqli->query("
@@ -111,7 +111,7 @@ function deal_cards(bool $with_table=false) {
         }
     }
 
-    /* === 4 στο τραπέζι ΜΟΝΟ στον 1ο γύρο === */
+    /* 4 στο τραπέζι ΜΟΝΟ στον 1ο γύρο */
     if ($with_table) {
 
         $cards = $mysqli->query("
@@ -138,8 +138,6 @@ function deal_cards(bool $with_table=false) {
         }
     }
 
-    // παιχνίδι ξεκινά
-    //ΜΗΝ πειράζεις table_cards αν ΔΕΝ είναι 1ος γύρος
 
 $st = $mysqli->prepare("
     UPDATE game_status

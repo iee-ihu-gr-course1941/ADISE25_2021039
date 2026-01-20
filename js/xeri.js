@@ -2,7 +2,7 @@ $(function () {
     $("#login_btn").click(login_to_game);
 });
 
-/* ================= LOGIN ================= */
+/* LOGIN */
 function login_to_game() {
     let username = $('#username').val().trim();
     let player   = $('#player').val();
@@ -39,7 +39,7 @@ function login_to_game() {
 });
 
 }
-
+/* XERES */
 function load_xeria() {
     $.ajax({
         url: "/~iee2021039/ADISE25_2021039/lib/xeri_status.php",
@@ -54,7 +54,7 @@ function load_xeria() {
 }
 let gameEnded = false;
 
-/* ================= STATUS ================= */
+/*  STATUS  */
 function load_status() {
     $.ajax({
        url: "/~iee2021039/ADISE25_2021039/lib/game_status_api.php",
@@ -70,7 +70,7 @@ function load_status() {
                 'Σειρά: ' + (st.turn ?? '-')
             );
 
-            // 🔥 ΑΥΤΟ ΕΛΕΙΠΕ
+            
             if (st.status === 'playing') {
                 load_game_state();
             }
@@ -115,16 +115,10 @@ if (st.status === 'game_end') {
         end_game();
     });
 }
-
-
-
-
-
-
-
         }
     });
 }
+/* TELOS */
 function end_game() {
     $.ajax({
         url: "/~iee2021039/ADISE25_2021039/lib/end_game.php",
@@ -137,7 +131,7 @@ function end_game() {
 }
 
 
-/* ================= GAME STATE ================= */
+/* GAME STATE */
 function load_game_state() {
     $.ajax({
         url: "/~iee2021039/ADISE25_2021039/lib/game_state.php",
@@ -169,13 +163,14 @@ function load_game_state() {
         }
     });
 }
+
 function update_table_count(count) {
     $('#table_count').html(
         `<b>Φύλλα στο τραπέζι:</b> ${count}`
     );
 }
 
-/* ================= RENDER ================= */
+/* τα φυλλα μου */
 function render_my_hand(cards) {
     let html = '<h3>Τα φύλλα μου</h3>';
 
@@ -192,9 +187,10 @@ function render_my_hand(cards) {
 
     $('#my_hand').html(html);
 
-    // click handler
+    // click se karta
     $('.my-card').click(on_card_click);
 }
+
 function on_card_click() {
     let cardId   = $(this).data('card-id');
     let cardCode = $(this).data('card-code');
@@ -231,13 +227,13 @@ function play_card(cardId) {
         data: JSON.stringify({ card_id: cardId }),
         success: function (data) {
 
-    // 🔥 αν τελείωσε ο γύρος
+    // telos gyrou
     if (data.round_end) {
-        load_status();   // θα δει dealing
+        load_status();   // dealing
         return;
     }
 
-    // κανονικό refresh
+    
     load_game_state();
 }
 ,

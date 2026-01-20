@@ -4,7 +4,7 @@ require_once 'game_status.php';
 update_game_status();
 header('Content-Type: application/json');
 
-/* ================= AUTH ================= */
+/* AUTH */
 $token = $_SERVER['HTTP_X_TOKEN'] ?? '';
 
 $st = $mysqli->prepare("
@@ -24,10 +24,10 @@ if (!$me) {
 $player   = $me['player'];
 $opponent = ($player === 'P1') ? 'P2' : 'P1';
 
-/* ================= STATUS ================= */
+/* STATUS */
 $status = read_status();
 
-/* ================= MY HAND ================= */
+/* MY HAND */
 $res = $mysqli->query("
     SELECT h.card_id, d.value, d.suit
     FROM hands h
@@ -36,8 +36,8 @@ $res = $mysqli->query("
 ");
 $my_hand = $res->fetch_all(MYSQLI_ASSOC);
 
-/* ================= TABLE CARDS (SAFE) ================= */
-$table_cards = []; // 🔥 ΠΑΝΤΑ αρχικοποίηση
+/* TABLE CARDS */
+$table_cards = []; // αρχικοποίηση
 
 $res = $mysqli->query("
     SELECT t.card_id, d.value, d.suit
@@ -51,7 +51,7 @@ if ($res) {
     $table_cards = $res->fetch_all(MYSQLI_ASSOC);
 }
 
-/* ================= OPPONENT CARDS ================= */
+/* καρτεσ αντιπαλου */
 $res = $mysqli->query("
     SELECT COUNT(*) c
     FROM hands
@@ -59,7 +59,7 @@ $res = $mysqli->query("
 ");
 $opponent_cards = (int)$res->fetch_assoc()['c'];
 
-/* ================= RESPONSE ================= */
+/* RESPONSE */
 echo json_encode([
     'status'           => $status['status'],
     'turn'             => $status['turn'],

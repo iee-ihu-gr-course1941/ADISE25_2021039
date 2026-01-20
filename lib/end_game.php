@@ -1,10 +1,10 @@
 <?php
 require_once 'db2connect.php';
-require_once 'deck.php'; // η συνάρτηση που ΕΧΕΙΣ
+require_once 'deck.php'; 
 
 header('Content-Type: application/json');
 
-// reset deck / hands / table
+// reset deck hands table
 reset_game();
 
 // reset players

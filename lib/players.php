@@ -4,14 +4,14 @@ require_once 'game_status.php';
 
 header('Content-Type: application/json');
 
-/* ================= METHOD ================= */
+/* METHOD */
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['error'=>'Only POST allowed']);
     exit;
 }
 
-/* ================= INPUT JSON ================= */
+/* INPUT JSON eisagvgh */
 $input = json_decode(file_get_contents('php://input'), true);
 
 if (
@@ -55,7 +55,7 @@ if ($row && $row['username'] !== null &&
     exit;
 }
 
-/* ================= LOGIN ================= */
+/* LOGIN */
 $token = md5($username . microtime(true));
 
 $stmt = $mysqli->prepare("
@@ -68,10 +68,10 @@ $stmt = $mysqli->prepare("
 $stmt->bind_param('sss', $username, $token, $player);
 $stmt->execute();
 
-/* ================= UPDATE STATUS ================= */
+/* UPDATE STATUS */
 update_game_status();
 
-/* ================= RESPONSE ================= */
+/* RESPONSE */
 echo json_encode([
     'success' => true,
     'player'  => $player,

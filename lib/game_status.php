@@ -7,8 +7,6 @@ header('Content-Type: application/json');
 
 
 
-/* ================= FUNCTIONS ================= */
-
 function read_status() {
     global $mysqli;
     $res = $mysqli->query("SELECT * FROM game_status");
@@ -24,7 +22,7 @@ function show_status() {
     $res = $mysqli->query("SELECT * FROM game_status LIMIT 1");
     $status = $res->fetch_assoc();
 
-    // αν τελείωσε το παιχνίδι → υπολόγισε σκορ
+    // αν τελείωσε το παιχνίδι υπολόγισε σκορ
     if ($status['status'] === 'game_end') {
         $score = calculate_round_score();
     } else {
@@ -43,24 +41,21 @@ function show_status() {
 
 
 
-/*
- * ΚΕΝΤΡΙΚΗ ΛΟΓΙΚΗ ΚΑΤΑΣΤΑΣΗΣ ΠΑΙΧΝΙΔΙΟΥ
- */
 function update_game_status() {
     
   
     global $mysqli;
 
-    // Πάρε τρέχουσα κατάσταση
+    // τρέχουσα κατάσταση
     $res = $mysqli->query("SELECT * FROM game_status LIMIT 1");
     $status = $res->fetch_assoc();
     if (!$status) return;
 if ($status['status'] === 'aborted') {
         return;
     }
-    /* ================= IDLE PLAYER CHECK ================= */
+    
 
-    // Πόσοι παίκτες είναι idle > 1 λεπτό (βάλε 20 MINUTE αν θες κανονικά)
+    // Πόσοι παίκτες δεν επαιξαν 20 λεπτ
     $st = $mysqli->prepare("
         SELECT COUNT(*) AS aborted
         FROM players
@@ -72,7 +67,7 @@ if ($status['status'] === 'aborted') {
 
     if ($aborted > 0 && $status['status'] === 'playing') {
 
-        // Καθάρισε τον idle παίκτη
+        // βγαλε τον idle παίκτη
         $mysqli->query("
             UPDATE players
             SET username = NULL, token = NULL
@@ -88,7 +83,7 @@ if ($status['status'] === 'aborted') {
         ");
         $winner = $res->fetch_assoc()['player'] ?? NULL;
 
-        // Κάνε abort το παιχνίδι
+        // abort
         $st2 = $mysqli->prepare("
             UPDATE game_status
             SET status='aborted',
@@ -104,7 +99,7 @@ if ($status['status'] === 'aborted') {
  
 
 
-    /* ================= ACTIVE PLAYERS ================= */
+    /* ACTIVE PLAYERS */
     $res = $mysqli->query("
         SELECT COUNT(*) c
         FROM players

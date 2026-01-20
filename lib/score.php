@@ -20,24 +20,24 @@ function calculate_round_score() {
 
         foreach ($cards as $c) {
 
-            // φιγούρες & 10
+            // γραμματα & 10
             if (in_array($c['value'], ['K','Q','J','10']) && !($c['value']=='10' && $c['suit']=='D')) {
                 $score[$p]++;
             }
 
-            // 2 ♠
+            // 2 s
             if ($c['value']=='2' && $c['suit']=='S') {
                 $score[$p]++;
             }
 
-            // 10 ♦
+            // 10 d
             if ($c['value']=='10' && $c['suit']=='D') {
                 $score[$p]++;
             }
         }
     }
 
-    // +3 περισσότερα φύλλα
+    // +3 φύλλα
     if ($cards_count['P1'] > $cards_count['P2']) {
         $score['P1'] += 3;
     } elseif ($cards_count['P2'] > $cards_count['P1']) {
