@@ -56,16 +56,16 @@ if ($row && $row['username'] !== null &&
 }
 
 /* LOGIN */
-
+$token = md5($username . microtime(true));
 
 $stmt = $mysqli->prepare("
     UPDATE players
     SET username = ?,
-        token = MD5(CONCAT(?, NOW())),
+        token = ?,
         last_action = NOW()
     WHERE player = ?
 ");
-$stmt->bind_param('sss', $username, $username, $player);
+$stmt->bind_param('sss', $username, $token, $player);
 $stmt->execute();
 
 /* UPDATE STATUS */
