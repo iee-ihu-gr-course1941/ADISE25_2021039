@@ -5,7 +5,7 @@ require_once "db_upass.php";
 
 $user=$DB_USER;
 $pass=$DB_PASS;
-$mysqli->set_charset("utf8mb3");
+
 
 
 if(gethostname()=='users.iee.ihu.gr') {
