@@ -157,6 +157,14 @@ if ($hands_left === 0) {
             UPDATE game_status
             SET status='dealing', turn='P1', last_change=NOW()
         ");
+        require_once 'deck.php';
+        deal_cards(false);
+
+        $mysqli->query("
+        UPDATE game_status
+        SET status='playing', turn='P1', last_change=NOW()
+        ");
+
     }
     else {
         // τελευταίος γύρος τα φύλλα κάτω δεν μετράνε
