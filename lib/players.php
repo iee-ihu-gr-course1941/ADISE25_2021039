@@ -34,7 +34,7 @@ if ($player !== 'P1' && $player !== 'P2') {
 }
 
 
-/* ================= CHECK PLAYER ================= */
+/* CHECK PLAYER */
 $check = $mysqli->prepare("
     SELECT username, last_action
     FROM players
